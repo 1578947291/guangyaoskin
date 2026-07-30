@@ -183,13 +183,13 @@ select:focus-visible {
 }
 
 main {
-  min-height: calc(100vh - 66px);
+  min-height: 100vh;
 }
 
 .page {
   display: grid;
   gap: 16px;
-  padding: 18px 18px calc(116px + env(safe-area-inset-bottom));
+  padding: calc(18px + env(safe-area-inset-top)) 18px calc(116px + env(safe-area-inset-bottom));
 }
 
 .page-header {
@@ -486,6 +486,189 @@ main {
   background: #fcfbf8;
 }
 
+.appointments-page {
+  align-content: start;
+}
+
+.calendar-panel {
+  display: grid;
+  min-width: 0;
+  padding: 14px;
+  gap: 10px;
+}
+
+.appointment-calendar {
+  --rdp-accent-color: var(--coral);
+  --rdp-accent-background-color: var(--coral-soft);
+  --rdp-day-height: 40px;
+  --rdp-day-width: 40px;
+  --rdp-day_button-height: 36px;
+  --rdp-day_button-width: 36px;
+  --rdp-selected-border: 0;
+  width: 100%;
+  margin: 0;
+  color: var(--text);
+}
+
+.appointment-calendar .rdp-months,
+.appointment-calendar .rdp-month,
+.appointment-calendar .rdp-month_grid {
+  width: 100%;
+  max-width: none;
+}
+
+.appointment-calendar .rdp-month_grid {
+  table-layout: fixed;
+}
+
+.appointment-calendar .rdp-month_caption {
+  align-items: center;
+  padding-left: 4px;
+}
+
+.appointment-calendar .rdp-caption_label {
+  font-size: 16px;
+  font-weight: 760;
+}
+
+.appointment-calendar .rdp-nav {
+  gap: 3px;
+}
+
+.appointment-calendar .rdp-button_previous,
+.appointment-calendar .rdp-button_next {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--teal);
+  background: var(--background);
+}
+
+.appointment-calendar .rdp-chevron {
+  color: currentColor;
+  fill: none;
+}
+
+.appointment-calendar .rdp-weekday {
+  padding: 7px 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.appointment-calendar .rdp-day {
+  width: calc(100% / 7);
+}
+
+.appointment-calendar .rdp-day_button {
+  position: relative;
+  margin: 0 auto;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 620;
+}
+
+.appointment-calendar .rdp-day_button:hover {
+  background: var(--teal-soft);
+}
+
+.appointment-calendar .rdp-outside .rdp-day_button {
+  color: var(--muted);
+  opacity: 0.48;
+}
+
+.appointment-calendar .rdp-today:not(.rdp-selected) .rdp-day_button {
+  border: 1px solid var(--teal);
+  color: var(--teal);
+}
+
+.appointment-calendar .has-appointment .rdp-day_button {
+  background: var(--coral-soft);
+  font-weight: 760;
+}
+
+.appointment-calendar .has-appointment .rdp-day_button::after {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--coral);
+  content: "";
+  transform: translateX(-50%);
+}
+
+.appointment-calendar .rdp-selected .rdp-day_button {
+  color: #ffffff;
+  background: var(--coral);
+  box-shadow: 0 4px 10px rgba(189, 41, 78, 0.2);
+}
+
+.appointment-calendar .rdp-selected .rdp-day_button::after {
+  background: #ffffff;
+}
+
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 620;
+}
+
+.calendar-legend span {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--coral-soft);
+}
+
+.calendar-legend span::after {
+  position: absolute;
+  bottom: 3px;
+  left: 8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--coral);
+  content: "";
+}
+
+.day-summary {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+.day-summary p,
+.day-summary h2 {
+  margin: 0;
+}
+
+.day-summary p {
+  margin-bottom: 3px;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.day-summary h2 {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 760;
+}
+
+.compact-button {
+  min-height: 34px;
+  padding: 6px 11px;
+  font-size: 12px;
+}
+
 .status-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -529,6 +712,59 @@ main {
 .record-list {
   display: grid;
   gap: 10px;
+}
+
+.appointment-card {
+  display: grid;
+  min-width: 0;
+  padding: 12px;
+  grid-template-columns: 50px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.appointment-photo {
+  display: grid;
+  width: 50px;
+  height: 50px;
+  place-items: center;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.appointment-photo.placeholder {
+  color: var(--teal);
+  background: var(--teal-soft);
+}
+
+.appointment-copy small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.service-tag {
+  flex: 0 0 auto;
+  max-width: 72px;
+  overflow: hidden;
+  padding: 3px 6px;
+  border-radius: 999px;
+  color: var(--gold);
+  background: var(--gold-soft);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.service-tag.experience {
+  color: var(--teal);
+  background: var(--teal-soft);
+}
+
+.service-tag.full-face {
+  color: var(--coral);
+  background: var(--coral-soft);
 }
 
 .record-row {
@@ -711,6 +947,58 @@ main {
   border: 0;
   color: var(--muted);
   background: transparent;
+}
+
+.registration-page {
+  align-content: start;
+}
+
+.registration-search {
+  position: relative;
+  z-index: 1;
+}
+
+.registration-card {
+  display: grid;
+  min-width: 0;
+  min-height: 92px;
+  padding: 12px;
+  grid-template-columns: 68px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+}
+
+.registration-photo {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.registration-photo.placeholder {
+  color: var(--teal);
+  background: var(--teal-soft);
+}
+
+.registration-copy {
+  align-content: center;
+  gap: 4px;
+}
+
+.registration-copy p {
+  overflow: visible;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.registration-copy small {
+  color: var(--teal);
+  font-weight: 680;
 }
 
 .customer-row {
@@ -1102,6 +1390,137 @@ main {
   opacity: 0;
 }
 
+.service-picker {
+  padding-top: 23px;
+  position: relative;
+}
+
+.service-picker legend {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.service-picker label {
+  min-width: 0;
+  min-height: 58px;
+  gap: 2px;
+}
+
+.service-picker label span {
+  font-size: 14px;
+  font-weight: 730;
+}
+
+.service-picker label small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 550;
+}
+
+.fixed-amount {
+  display: grid;
+  padding: 13px 14px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 3px 12px;
+  border: 1px solid rgba(47, 128, 109, 0.3);
+  border-radius: 8px;
+  background: var(--teal-soft);
+}
+
+.fixed-amount span,
+.fixed-amount small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 620;
+}
+
+.fixed-amount strong {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  color: var(--teal);
+  font-size: 20px;
+  font-weight: 780;
+}
+
+.photo-field {
+  display: grid;
+  gap: 6px;
+}
+
+.field-label {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.photo-picker {
+  display: grid !important;
+  min-height: 92px;
+  padding: 13px;
+  place-items: center;
+  align-content: center;
+  gap: 3px !important;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--teal) !important;
+  background: var(--background);
+  cursor: pointer;
+  text-align: center;
+}
+
+.photo-picker:hover {
+  border-color: var(--teal);
+  background: var(--teal-soft);
+}
+
+.photo-picker span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.photo-picker small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 550;
+}
+
+.photo-preview {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--background);
+}
+
+.photo-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.photo-preview .danger-icon-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 .install-help {
   display: grid;
   gap: 10px;
@@ -1179,6 +1598,21 @@ main {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .appointment-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  .calendar-panel {
+    padding: 18px 22px;
+  }
+
+  .appointment-calendar {
+    --rdp-day-height: 46px;
+    --rdp-day-width: 46px;
+    --rdp-day_button-height: 40px;
+    --rdp-day_button-width: 40px;
+  }
+
   .data-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1220,6 +1654,53 @@ main {
   .action-button {
     min-width: 42px;
     padding: 8px 10px;
+  }
+
+  .calendar-panel {
+    padding: 12px 8px;
+  }
+
+  .appointment-calendar {
+    --rdp-day-height: 38px;
+    --rdp-day-width: 38px;
+    --rdp-day_button-height: 34px;
+    --rdp-day_button-width: 34px;
+  }
+
+  .appointment-card {
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    gap: 9px;
+  }
+
+  .appointment-photo {
+    width: 46px;
+    height: 46px;
+  }
+
+  .appointment-card .status-select {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .appointment-card .danger-icon-button {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+
+  .registration-card {
+    min-height: 82px;
+    padding: 10px;
+    grid-template-columns: 58px minmax(0, 1fr) auto;
+    gap: 9px;
+  }
+
+  .registration-photo {
+    width: 58px;
+    height: 58px;
+  }
+
+  .fixed-amount strong {
+    font-size: 18px;
   }
 
   .metric {
@@ -1317,6 +1798,14 @@ main {
   .toast {
     border-color: #69736f;
     background: #0f1312;
+  }
+
+  .appointment-calendar .rdp-selected .rdp-day_button {
+    color: #251c28;
+  }
+
+  .appointment-calendar .rdp-selected .rdp-day_button::after {
+    background: #251c28;
   }
 }
 
