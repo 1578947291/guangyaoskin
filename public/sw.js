@@ -1,4 +1,4 @@
-const CACHE_NAME = 'guangyao-skin-v3'
+const CACHE_NAME = 'guangyao-skin-v4'
 const BASE_PATH = new URL(self.registration.scope).pathname
 const fromBase = (path = '') => `${BASE_PATH}${path}`
 const APP_SHELL = [
