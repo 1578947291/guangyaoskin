@@ -79,7 +79,7 @@ test('database migration moves legacy appointment photos onto customers', () => 
 
 test('primary pages confirm exit while secondary pages use history back', () => {
   assert.match(app, /guangYaoExitGuard/)
-  assert.match(app, /确定退出光曜塑肤吗/)
+  assert.match(app, /确定退出凹陷修复吗/)
   assert.match(app, /window\.history\.forward\(\)/)
   assert.match(app, /state\.from === fallbackHash/)
 })

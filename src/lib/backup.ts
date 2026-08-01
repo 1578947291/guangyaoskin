@@ -4,7 +4,7 @@ import type { Appointment, CustomerRecord, LedgerEntry } from '../types'
 
 interface BackupPayload {
   version: 1
-  app: '光曜塑肤'
+  app: '凹陷修复' | '光曜塑肤'
   exportedAt: string
   appointments: Appointment[]
   customers: CustomerRecord[]
@@ -15,7 +15,7 @@ function isBackupPayload(value: unknown): value is BackupPayload {
   if (!value || typeof value !== 'object') return false
   const payload = value as Partial<BackupPayload>
   return payload.version === 1 &&
-    payload.app === '光曜塑肤' &&
+    (payload.app === '凹陷修复' || payload.app === '光曜塑肤') &&
     Array.isArray(payload.appointments) &&
     Array.isArray(payload.customers) &&
     Array.isArray(payload.ledgerEntries)
@@ -24,7 +24,7 @@ function isBackupPayload(value: unknown): value is BackupPayload {
 export async function createBackup(): Promise<void> {
   const payload: BackupPayload = {
     version: 1,
-    app: '光曜塑肤',
+    app: '凹陷修复',
     exportedAt: new Date().toISOString(),
     appointments: await db.appointments.toArray(),
     customers: await db.customers.toArray(),
@@ -39,7 +39,7 @@ export async function createBackup(): Promise<void> {
     month: '2-digit',
     day: '2-digit'
   }).format(new Date()).replaceAll('/', '-')
-  const filename = `光曜塑肤备份-${date}.json`
+  const filename = `凹陷修复备份-${date}.json`
 
   const savePicker = (window as Window & {
     showSaveFilePicker?: (options: unknown) => Promise<FileSystemFileHandle>
@@ -67,7 +67,7 @@ export async function createBackup(): Promise<void> {
 export async function restoreBackup(file: File): Promise<void> {
   const parsed: unknown = JSON.parse(await file.text())
   if (!isBackupPayload(parsed)) {
-    throw new Error('这不是有效的光曜塑肤备份文件')
+    throw new Error('这不是有效的凹陷修复备份文件')
   }
 
   const migrated = migrateCustomerRelations(parsed.appointments, parsed.customers)

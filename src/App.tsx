@@ -89,7 +89,7 @@ export default function App() {
           window.setTimeout(() => window.close(), 150)
           return
         }
-        if (window.confirm('确定退出光曜塑肤吗？')) {
+        if (window.confirm('确定退出凹陷修复吗？')) {
           exitConfirmed.current = true
           window.history.back()
           window.setTimeout(() => window.close(), 150)
@@ -100,7 +100,7 @@ export default function App() {
         return
       }
       if (state?.guangYaoPrimary && !isSecondaryRoute(activeRoute.current)) {
-        if (window.confirm('确定退出光曜塑肤吗？')) {
+        if (window.confirm('确定退出凹陷修复吗？')) {
           exitConfirmed.current = true
           window.history.back()
         } else {

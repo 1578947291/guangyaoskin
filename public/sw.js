@@ -1,5 +1,5 @@
 // Bump this name after releases so installed PWAs replace the previous app shell.
-const CACHE_NAME = 'guangyao-skin-v8'
+const CACHE_NAME = 'guangyao-skin-v11'
 const BASE_PATH = new URL(self.registration.scope).pathname
 const fromBase = (path = '') => `${BASE_PATH}${path}`
 const APP_SHELL = [
