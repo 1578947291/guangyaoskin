@@ -4,8 +4,10 @@ import { Camera, Search, Trash2, UserPlus, UserRound, X } from 'lucide-react'
 import { Modal } from '../components/Modal'
 import { EmptyState, PageHeader } from '../components/PageElements'
 import { db } from '../db'
+import { createId } from '../lib/id'
 import { preparePhoto } from '../lib/images'
 import type { AppointmentService, Notify } from '../types'
+import { CustomerDetailPage } from './CustomerDetailPage'
 
 const serviceLabels: Record<AppointmentService, string> = {
   experience: '体验',
@@ -36,9 +38,23 @@ function todayValue() {
 
 interface RegistrationPageProps {
   notify: Notify
+  customerId?: string
+  appointmentId?: string
+  onOpenCustomer: (customerId: string) => void
+  onOpenAppointment: (customerId: string, appointmentId: string) => void
+  onBackCustomer: () => void
+  onBackAppointment: (customerId: string) => void
 }
 
-export function RegistrationPage({ notify }: RegistrationPageProps) {
+export function RegistrationPage({
+  notify,
+  customerId,
+  appointmentId,
+  onOpenCustomer,
+  onOpenAppointment,
+  onBackCustomer,
+  onBackAppointment
+}: RegistrationPageProps) {
   const customers = useLiveQuery(() => db.customers.orderBy('createdAt').reverse().toArray(), []) ?? []
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
@@ -100,7 +116,7 @@ export function RegistrationPage({ notify }: RegistrationPageProps) {
     setSaving(true)
     try {
       await db.customers.add({
-        id: crypto.randomUUID(),
+        id: createId(),
         name: name.trim(),
         phone: phone.trim(),
         skinNotes: notes.trim(),
@@ -110,6 +126,7 @@ export function RegistrationPage({ notify }: RegistrationPageProps) {
         amount,
         sessions: sessionCount,
         repairDate,
+        repairStatus: 'pending',
         photoDataUrl: photoDataUrl || undefined
       })
       close()
@@ -141,6 +158,23 @@ export function RegistrationPage({ notify }: RegistrationPageProps) {
     notify('顾客登记已删除')
   }
 
+  const detailCustomer = customerId
+    ? customers.find((customer) => customer.id === customerId)
+    : undefined
+
+  if (detailCustomer) {
+    return (
+      <CustomerDetailPage
+        customer={detailCustomer}
+        notify={notify}
+        appointmentId={appointmentId}
+        onBack={onBackCustomer}
+        onOpenAppointment={(selectedAppointmentId) => onOpenAppointment(detailCustomer.id, selectedAppointmentId)}
+        onBackAppointment={() => onBackAppointment(detailCustomer.id)}
+      />
+    )
+  }
+
   return (
     <section className="page registration-page">
       <PageHeader
@@ -167,6 +201,7 @@ export function RegistrationPage({ notify }: RegistrationPageProps) {
             const serviceName = customer.serviceType ? serviceLabels[customer.serviceType] : '未设置项目'
             return (
               <article className="registration-card surface" key={customer.id}>
+                <button className="registration-detail-hitarea" type="button" onClick={() => onOpenCustomer(customer.id)} aria-label={`查看${customer.name}的用户详情`} />
                 {customer.photoDataUrl ? (
                   <img className="registration-photo" src={customer.photoDataUrl} alt={`${customer.name}的登记照片`} />
                 ) : (

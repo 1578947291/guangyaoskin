@@ -39,7 +39,7 @@ export function Modal({ title, open, onClose, children }: ModalProps) {
             <X size={20} />
           </button>
         </header>
-        {children}
+        <div className="modal-body">{children}</div>
       </section>
     </div>
   )

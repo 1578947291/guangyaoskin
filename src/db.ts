@@ -13,6 +13,11 @@ class GuangYaoDatabase extends Dexie {
       customers: 'id, name, phone, createdAt',
       ledgerEntries: 'id, occurredAt, kind, createdAt'
     })
+    this.version(2).stores({
+      appointments: 'id, scheduledAt, status, createdAt',
+      customers: 'id, name, phone, createdAt, repairDate, repairStatus',
+      ledgerEntries: 'id, occurredAt, kind, createdAt'
+    })
   }
 }
 

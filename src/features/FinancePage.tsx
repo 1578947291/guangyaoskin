@@ -13,7 +13,9 @@ import { Modal } from '../components/Modal'
 import { EmptyState, PageHeader } from '../components/PageElements'
 import { db } from '../db'
 import { createBackup, restoreBackup } from '../lib/backup'
-import type { LedgerKind, Notify } from '../types'
+import { createId } from '../lib/id'
+import { ledgerOccurrence } from '../lib/ledger'
+import type { Appointment, LedgerKind, Notify } from '../types'
 
 const currency = new Intl.NumberFormat('zh-CN', {
   style: 'currency',
@@ -28,6 +30,7 @@ interface FinancePageProps {
 
 export function FinancePage({ notify }: FinancePageProps) {
   const entries = useLiveQuery(() => db.ledgerEntries.orderBy('occurredAt').reverse().toArray(), []) ?? []
+  const appointments = useLiveQuery(() => db.appointments.toArray(), []) ?? []
   const fileInput = useRef<HTMLInputElement>(null)
   const [open, setOpen] = useState(false)
   const [kind, setKind] = useState<LedgerKind>('income')
@@ -41,8 +44,13 @@ export function FinancePage({ notify }: FinancePageProps) {
   const [notes, setNotes] = useState('')
 
   const now = new Date()
-  const monthly = entries.filter((entry) => {
-    const date = new Date(entry.occurredAt)
+  const appointmentsById = new Map<string, Appointment>(appointments.map((appointment) => [appointment.id, appointment]))
+  const sortedEntries = [...entries].sort((first, second) =>
+    new Date(ledgerOccurrence(second, appointmentsById)).getTime() -
+    new Date(ledgerOccurrence(first, appointmentsById)).getTime()
+  )
+  const monthly = sortedEntries.filter((entry) => {
+    const date = new Date(ledgerOccurrence(entry, appointmentsById))
     return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth()
   })
   const income = monthly.filter((entry) => entry.kind === 'income').reduce((sum, entry) => sum + entry.amount, 0)
@@ -53,7 +61,7 @@ export function FinancePage({ notify }: FinancePageProps) {
     const numericAmount = Number(amount)
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) return
     await db.ledgerEntries.add({
-      id: crypto.randomUUID(),
+      id: createId(),
       title: title.trim(),
       amount: numericAmount,
       kind,
@@ -122,20 +130,20 @@ export function FinancePage({ notify }: FinancePageProps) {
         <input ref={fileInput} className="visually-hidden-input" type="file" accept="application/json,.json" onChange={restore} />
       </div>
 
-      {entries.length === 0 ? (
+      {sortedEntries.length === 0 ? (
         <EmptyState icon={TrendingUp} title="还没有收支记录" message="点击右上角记录第一笔收入或支出" />
       ) : (
         <section className="recent-section">
           <h2>最近记录</h2>
           <div className="record-list ledger-list">
-            {entries.map((entry) => (
+            {sortedEntries.map((entry) => (
               <article className="record-row ledger-row surface" key={entry.id}>
                 <span className={`round-icon ${entry.kind === 'income' ? 'teal' : 'coral'}`}>
                   {entry.kind === 'income' ? <ArrowDownLeft size={17} /> : <ArrowUpRight size={17} />}
                 </span>
                 <div className="record-copy">
                   <h3>{entry.title}</h3>
-                  <small>{new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(entry.occurredAt))}</small>
+                  <small>{new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(ledgerOccurrence(entry, appointmentsById)))}</small>
                 </div>
                 <strong className={`money ${entry.kind}`}>{entry.kind === 'income' ? '+' : '-'}{currency.format(entry.amount)}</strong>
                 <button className="danger-icon-button" type="button" onClick={() => remove(entry.id)} aria-label="删除收支记录" title="删除收支记录"><Trash2 size={17} /></button>

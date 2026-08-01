@@ -4,6 +4,8 @@ export type AppointmentStatus = 'upcoming' | 'completed' | 'cancelled'
 
 export type AppointmentService = 'experience' | 'full-face'
 
+export type RepairStatus = 'pending' | 'completed' | 'cancelled'
+
 export interface Appointment {
   id: string
   customerName: string
@@ -19,10 +21,13 @@ export interface Appointment {
   appointmentType?: AppointmentService
   amount?: number
   photoDataUrl?: string
+  photoDataUrls?: string[]
+  cancelReason?: string
 }
 
 export interface CustomerRecord {
   id: string
+  appointmentId?: string
   name: string
   phone: string
   skinNotes: string
@@ -33,7 +38,9 @@ export interface CustomerRecord {
   amount?: number
   sessions?: number
   repairDate?: string
+  repairStatus?: RepairStatus
   photoDataUrl?: string
+  cancelReason?: string
 }
 
 export type LedgerKind = 'income' | 'expense'
