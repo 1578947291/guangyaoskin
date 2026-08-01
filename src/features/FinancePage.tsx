@@ -1,13 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  Plus,
-  ChevronRight,
-  Trash2,
-  TrendingUp
-} from 'lucide-react'
+import { CuteIcon } from '../components/CuteIcon'
 import { Modal } from '../components/Modal'
 import { EmptyState, PageHeader } from '../components/PageElements'
 import { db } from '../db'
@@ -86,13 +79,13 @@ export function FinancePage({ notify, onOpenSummary }: FinancePageProps) {
         eyebrow="FINANCE"
         title="收支"
         subtitle="记录每一笔经营往来"
-        action={<button className="action-button" type="button" onClick={() => setOpen(true)}><Plus size={17} />新增</button>}
+        action={<button className="action-button" type="button" onClick={() => setOpen(true)}><CuteIcon name="plus" size={17} />新增</button>}
       />
 
       <button className="balance-card balance-card-button surface" type="button" onClick={onOpenSummary} aria-label="查看本月结余明细">
         <div className="balance-heading">
           <div><span>本月结余</span><strong>{currency.format(income - expense)}</strong></div>
-          <span className="balance-open-icon"><TrendingUp size={20} /><ChevronRight size={17} /></span>
+          <span className="balance-open-icon"><CuteIcon name="trend" size={20} /><CuteIcon name="right" size={17} /></span>
         </div>
         <div className="balance-split">
           <BalanceItem label="收入" value={income} kind="income" />
@@ -101,7 +94,7 @@ export function FinancePage({ notify, onOpenSummary }: FinancePageProps) {
       </button>
 
       {sortedEntries.length === 0 ? (
-        <EmptyState icon={TrendingUp} title="还没有收支记录" message="点击右上角记录第一笔收入或支出" />
+        <EmptyState icon="trend" title="还没有收支记录" message="点击右上角记录第一笔收入或支出" />
       ) : (
         <section className="recent-section">
           <h2>最近记录</h2>
@@ -109,14 +102,14 @@ export function FinancePage({ notify, onOpenSummary }: FinancePageProps) {
             {sortedEntries.map((entry) => (
               <article className="record-row ledger-row surface" key={entry.id}>
                 <span className={`round-icon ${entry.kind === 'income' ? 'teal' : 'coral'}`}>
-                  {entry.kind === 'income' ? <ArrowDownLeft size={17} /> : <ArrowUpRight size={17} />}
+                  <CuteIcon name={entry.kind === 'income' ? 'income' : 'expense'} size={17} />
                 </span>
                 <div className="record-copy">
                   <h3>{entry.title}</h3>
                   <small>{new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(ledgerOccurrence(entry, appointmentsById)))}</small>
                 </div>
                 <strong className={`money ${entry.kind}`}>{entry.kind === 'income' ? '+' : '-'}{currency.format(entry.amount)}</strong>
-                <button className="danger-icon-button" type="button" onClick={() => remove(entry.id)} aria-label="删除收支记录" title="删除收支记录"><Trash2 size={17} /></button>
+                <button className="danger-icon-button" type="button" onClick={() => remove(entry.id)} aria-label="删除收支记录" title="删除收支记录"><CuteIcon name="delete" size={17} /></button>
               </article>
             ))}
           </div>
@@ -145,10 +138,9 @@ export function FinancePage({ notify, onOpenSummary }: FinancePageProps) {
 }
 
 function BalanceItem({ label, value, kind }: { label: string; value: number; kind: LedgerKind }) {
-  const Icon = kind === 'income' ? ArrowDownLeft : ArrowUpRight
   return (
     <div className={`balance-item ${kind}`}>
-      <span className={`round-icon ${kind === 'income' ? 'teal' : 'coral'}`}><Icon size={14} /></span>
+      <span className={`round-icon ${kind === 'income' ? 'teal' : 'coral'}`}><CuteIcon name={kind === 'income' ? 'income' : 'expense'} size={14} /></span>
       <div><span>{label}</span><strong>{currency.format(value)}</strong></div>
     </div>
   )

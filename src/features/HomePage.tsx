@@ -1,13 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import {
-  Banknote,
-  CalendarDays,
-  Check,
-  CircleX,
-  UserRound,
-  UsersRound,
-  type LucideIcon
-} from 'lucide-react'
+import { CuteIcon, type CuteIconName } from '../components/CuteIcon'
 import { db } from '../db'
 import type { Appointment, AppointmentService, CustomerRecord, Notify } from '../types'
 
@@ -164,8 +156,8 @@ export function HomePage({ notify }: HomePageProps) {
           <p className="home-greeting-copy">{openingMessage.subtitle}</p>
         </header>
         <div className="metrics-grid home-metrics" aria-label="今日经营数据">
-          <Metric title="今日客人数" value={String(todayCustomers)} suffix="位" icon={UsersRound} tone="teal" />
-          <Metric title="今日收入" value={currency.format(todayIncome)} icon={Banknote} tone="gold" compact />
+          <Metric title="今日客人数" value={String(todayCustomers)} suffix="位" icon="users" tone="teal" />
+          <Metric title="今日收入" value={currency.format(todayIncome)} icon="money" tone="gold" compact />
         </div>
       </section>
 
@@ -180,7 +172,7 @@ export function HomePage({ notify }: HomePageProps) {
 
         {pendingRepairs.length === 0 ? (
           <div className="repair-empty surface">
-            <span className="round-icon teal"><CalendarDays size={20} /></span>
+            <span className="round-icon teal"><CuteIcon name="calendar" size={20} /></span>
             <div><h2>暂无待修复客人</h2><p>新增登记或预约后，修复安排会显示在这里</p></div>
           </div>
         ) : (
@@ -192,22 +184,22 @@ export function HomePage({ notify }: HomePageProps) {
                   {customer.photoDataUrl ? (
                     <img className="repair-photo" src={customer.photoDataUrl} alt={`${customer.name}的照片`} />
                   ) : (
-                    <span className="repair-photo placeholder" aria-hidden="true"><UserRound size={24} /></span>
+                    <span className="repair-photo placeholder" aria-hidden="true"><CuteIcon name="user" size={24} /></span>
                   )}
                   <div className="repair-copy">
                     <div className="record-title-line">
                       <h2>{customer.name}</h2>
                       <span className={`service-tag ${customer.serviceType || 'legacy'}`}>{serviceName}</span>
                     </div>
-                    <p><CalendarDays size={14} />{formatRepairDate(customer.repairDate!)}</p>
+                    <p><CuteIcon name="calendar" size={14} />{formatRepairDate(customer.repairDate!)}</p>
                     <small>{customer.sessions ? `${customer.sessions} 次` : '次数未填写'}{customer.wechatId ? ` · ${customer.wechatId}` : ''}</small>
                   </div>
                   <div className="repair-actions">
                     <button className="repair-action complete" type="button" onClick={() => completeRepair(customer)}>
-                      <Check size={16} />修复完成
+                      <CuteIcon name="check" size={16} />修复完成
                     </button>
                     <button className="repair-action cancel" type="button" onClick={() => cancelRepair(customer)}>
-                      <CircleX size={16} />取消修复
+                      <CuteIcon name="cancel" size={16} />取消修复
                     </button>
                   </div>
                 </article>
@@ -224,16 +216,16 @@ interface MetricProps {
   title: string
   value: string
   suffix?: string
-  icon: LucideIcon
+  icon: CuteIconName
   tone: 'teal' | 'gold'
   compact?: boolean
 }
 
-function Metric({ title, value, suffix, icon: Icon, tone, compact }: MetricProps) {
+function Metric({ title, value, suffix, icon, tone, compact }: MetricProps) {
   return (
     <article className="metric home-metric surface">
       <div className="metric-top">
-        <span className={`round-icon ${tone}`}><Icon size={17} /></span>
+        <span className={`round-icon ${tone}`}><CuteIcon name={icon} size={17} /></span>
         <span>{title}</span>
       </div>
       <p className={compact ? 'compact-value' : ''}>

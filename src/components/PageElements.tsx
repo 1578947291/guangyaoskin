@@ -1,4 +1,4 @@
-import type { LucideIcon } from 'lucide-react'
+import { CuteIcon, type CuteIconName } from './CuteIcon'
 
 interface PageHeaderProps {
   eyebrow: string
@@ -21,15 +21,15 @@ export function PageHeader({ eyebrow, title, subtitle, action }: PageHeaderProps
 }
 
 interface EmptyStateProps {
-  icon: LucideIcon
+  icon: CuteIconName
   title: string
   message: string
 }
 
-export function EmptyState({ icon: Icon, title, message }: EmptyStateProps) {
+export function EmptyState({ icon, title, message }: EmptyStateProps) {
   return (
     <section className="empty-state surface" aria-live="polite">
-      <span className="empty-icon"><Icon size={25} /></span>
+      <span className="empty-icon"><CuteIcon name={icon} size={25} /></span>
       <h2>{title}</h2>
       <p>{message}</p>
     </section>

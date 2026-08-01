@@ -1,11 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import {
-  ArrowDownLeft,
-  ArrowLeft,
-  ArrowUpRight,
-  CalendarRange
-} from 'lucide-react'
+import { CuteIcon } from '../components/CuteIcon'
 import { EmptyState } from '../components/PageElements'
 import { db } from '../db'
 import { ledgerOccurrence } from '../lib/ledger'
@@ -67,7 +62,7 @@ export function FinanceSummaryPage({ onBack }: FinanceSummaryPageProps) {
     <section className="page finance-summary-page">
       <header className="detail-page-header">
         <button className="icon-button detail-back-button" type="button" onClick={onBack} aria-label="返回收支页面" title="返回">
-          <ArrowLeft size={20} />
+          <CuteIcon name="back" size={20} />
         </button>
         <div><p>FINANCE DETAIL</p><h1>收支明细</h1></div>
         <span className="finance-period-count">{filteredEntries.length} 笔</span>
@@ -104,7 +99,7 @@ export function FinanceSummaryPage({ onBack }: FinanceSummaryPageProps) {
               return (
                 <article className="record-row ledger-row finance-ledger-row surface" key={entry.id}>
                   <span className={`round-icon ${entry.kind === 'income' ? 'teal' : 'coral'}`}>
-                    {entry.kind === 'income' ? <ArrowDownLeft size={17} /> : <ArrowUpRight size={17} />}
+                    <CuteIcon name={entry.kind === 'income' ? 'income' : 'expense'} size={17} />
                   </span>
                   <div className="record-copy">
                     <h3>{entry.title}</h3>
@@ -118,17 +113,16 @@ export function FinanceSummaryPage({ onBack }: FinanceSummaryPageProps) {
           </div>
         </section>
       ) : (
-        <EmptyState icon={CalendarRange} title={`${periodLabel}暂无记录`} message="切换月份或年份查看其他经营流水" />
+        <EmptyState icon="calendar" title={`${periodLabel}暂无记录`} message="切换月份或年份查看其他经营流水" />
       )}
     </section>
   )
 }
 
 function SummaryItem({ label, value, kind }: { label: string; value: number; kind: 'income' | 'expense' }) {
-  const Icon = kind === 'income' ? ArrowDownLeft : ArrowUpRight
   return (
     <div className={`balance-item ${kind}`}>
-      <span className={`round-icon ${kind === 'income' ? 'teal' : 'coral'}`}><Icon size={14} /></span>
+      <span className={`round-icon ${kind === 'income' ? 'teal' : 'coral'}`}><CuteIcon name={kind === 'income' ? 'income' : 'expense'} size={14} /></span>
       <div><span>{label}</span><strong>{currency.format(value)}</strong></div>
     </div>
   )

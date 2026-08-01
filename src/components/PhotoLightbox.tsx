@@ -1,5 +1,5 @@
 import { useEffect, useRef, type MouseEvent } from 'react'
-import { ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { CuteIcon } from './CuteIcon'
 
 interface PhotoLightboxProps {
   name: string
@@ -39,7 +39,7 @@ export function PhotoLightbox({ name, photos, activeIndex, onClose, onPrevious, 
       <header className="photo-lightbox-header" onMouseDown={stopPropagation}>
         <span>{activeIndex + 1} / {photos.length}</span>
         <button ref={closeButtonRef} className="photo-lightbox-button" type="button" onClick={onClose} aria-label="关闭大图" title="关闭">
-          <X size={22} />
+          <CuteIcon name="close" size={22} />
         </button>
       </header>
       <div className="photo-lightbox-stage" onMouseDown={stopPropagation}>
@@ -47,8 +47,8 @@ export function PhotoLightbox({ name, photos, activeIndex, onClose, onPrevious, 
       </div>
       {photos.length > 1 ? (
         <div className="photo-lightbox-controls" onMouseDown={stopPropagation}>
-          <button className="photo-lightbox-button" type="button" onClick={onPrevious} aria-label="查看上一张照片" title="上一张"><ChevronLeft size={25} /></button>
-          <button className="photo-lightbox-button" type="button" onClick={onNext} aria-label="查看下一张照片" title="下一张"><ChevronRight size={25} /></button>
+          <button className="photo-lightbox-button" type="button" onClick={onPrevious} aria-label="查看上一张照片" title="上一张"><CuteIcon name="previous" size={25} /></button>
+          <button className="photo-lightbox-button" type="button" onClick={onNext} aria-label="查看下一张照片" title="下一张"><CuteIcon name="next" size={25} /></button>
         </div>
       ) : null}
     </div>

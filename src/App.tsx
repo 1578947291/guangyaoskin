@@ -11,6 +11,7 @@ interface AppRoute {
   section: AppSection
   customerId?: string
   appointmentId?: string
+  customerView?: 'photos'
   financeView?: 'summary'
 }
 
@@ -32,7 +33,8 @@ function readRoute(): AppRoute {
     return {
       section: 'registration',
       customerId: decodeRoutePart(parts[1]),
-      appointmentId: parts[2] === 'appointments' ? decodeRoutePart(parts[3]) : undefined
+      appointmentId: parts[2] === 'appointments' ? decodeRoutePart(parts[3]) : undefined,
+      customerView: parts[2] === 'photos' ? 'photos' : undefined
     }
   }
   if (parts[0] === 'finance') {
@@ -185,10 +187,13 @@ export default function App() {
             notify={setToast}
             customerId={route.customerId}
             appointmentId={route.appointmentId}
+            customerView={route.customerView}
             onOpenCustomer={(customerId) => navigate(`#registration/${encodeURIComponent(customerId)}`)}
             onOpenAppointment={(customerId, appointmentId) => navigate(`#registration/${encodeURIComponent(customerId)}/appointments/${encodeURIComponent(appointmentId)}`)}
+            onOpenPhotos={(customerId) => navigate(`#registration/${encodeURIComponent(customerId)}/photos`)}
             onBackCustomer={() => goBack('#registration')}
             onBackAppointment={(customerId) => goBack(`#registration/${encodeURIComponent(customerId)}`)}
+            onBackPhotos={(customerId) => goBack(`#registration/${encodeURIComponent(customerId)}`)}
           />
         ) : null}
         {route.section === 'finance' && route.financeView === 'summary' ? (

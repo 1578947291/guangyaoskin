@@ -1,25 +1,11 @@
-import { useState, type ChangeEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import {
-  ArrowLeft,
-  CalendarDays,
-  ChevronRight,
-  Clock3,
-  ImagePlus,
-  Maximize2,
-  MessageCircle,
-  Phone,
-  UserRound,
-  WalletCards
-} from 'lucide-react'
-import { PhotoLightbox } from '../components/PhotoLightbox'
+import { CuteIcon, type CuteIconName } from '../components/CuteIcon'
 import { db } from '../db'
 import { customerAppointments } from '../lib/customerAppointments'
 import { customerPhotos } from '../lib/customerPhotos'
-import { preparePhoto } from '../lib/images'
-import type { AppointmentService, AppointmentStatus, CustomerRecord, Notify } from '../types'
+import type { AppointmentService, AppointmentStatus, CustomerRecord } from '../types'
 import { AppointmentDetailPage } from './AppointmentDetailPage'
 
 const serviceLabels: Record<AppointmentService, string> = {
@@ -42,25 +28,24 @@ const currency = new Intl.NumberFormat('zh-CN', {
 
 interface CustomerDetailPageProps {
   customer: CustomerRecord
-  notify: Notify
   appointmentId?: string
   onBack: () => void
   onOpenAppointment: (appointmentId: string) => void
+  onOpenPhotos: () => void
   onBackAppointment: () => void
 }
 
 export function CustomerDetailPage({
   customer,
-  notify,
   appointmentId,
   onBack,
   onOpenAppointment,
+  onOpenPhotos,
   onBackAppointment
 }: CustomerDetailPageProps) {
   const appointments = useLiveQuery(() => db.appointments.toArray(), []) ?? []
-  const [photoBusy, setPhotoBusy] = useState(false)
-  const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   const photos = customerPhotos(customer)
+  const previewPhotos = photos.slice(0, 2)
   const linkedAppointments = customerAppointments(customer, appointments)
   const selectedAppointment = appointmentId
     ? linkedAppointments.find((appointment) => appointment.id === appointmentId)
@@ -78,39 +63,11 @@ export function CustomerDetailPage({
   const appointmentTotal = linkedAppointments.reduce((sum, appointment) => sum + (appointment.amount || 0), 0)
   const serviceName = customer.serviceType ? serviceLabels[customer.serviceType] : '未设置项目'
 
-  const addPhotos = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || [])
-    event.target.value = ''
-    if (!files.length) return
-
-    setPhotoBusy(true)
-    try {
-      const addedPhotos = await Promise.all(files.map(preparePhoto))
-      const nextPhotos = Array.from(new Set([...photos, ...addedPhotos]))
-      await db.customers.update(customer.id, {
-        photoDataUrl: nextPhotos[0],
-        photoDataUrls: nextPhotos
-      })
-      notify(`已添加 ${addedPhotos.length} 张客户照片`)
-    } catch (error) {
-      notify(error instanceof Error ? error.message : '照片处理失败')
-    } finally {
-      setPhotoBusy(false)
-    }
-  }
-
-  const showPrevious = () => setViewerIndex((current) => current === null
-    ? null
-    : (current - 1 + photos.length) % photos.length)
-  const showNext = () => setViewerIndex((current) => current === null
-    ? null
-    : (current + 1) % photos.length)
-
   return (
     <section className="page customer-detail-page">
       <header className="detail-page-header">
         <button className="icon-button detail-back-button" type="button" onClick={onBack} aria-label="返回登记列表" title="返回">
-          <ArrowLeft size={20} />
+          <CuteIcon name="back" size={20} />
         </button>
         <div><p>CLIENT DETAIL</p><h1>用户详情</h1></div>
         <span className={`service-tag ${customer.serviceType || 'legacy'}`}>{serviceName}</span>
@@ -121,7 +78,7 @@ export function CustomerDetailPage({
           {photos[0] ? (
             <img src={photos[0]} alt={`${customer.name}的客户照片`} />
           ) : (
-            <span className="customer-detail-avatar" aria-hidden="true"><UserRound size={30} /></span>
+            <span className="customer-detail-avatar" aria-hidden="true"><CuteIcon name="user" size={30} /></span>
           )}
           <div>
             <h2>{customer.name}</h2>
@@ -130,45 +87,37 @@ export function CustomerDetailPage({
         </div>
 
         <div className="detail-info-grid customer-detail-info" aria-label="用户资料">
-          <DetailItem icon={Phone} label="联系电话" value={customer.phone || '未填写'} />
-          <DetailItem icon={CalendarDays} label="修复日期" value={customer.repairDate || '未设置'} />
-          <DetailItem icon={WalletCards} label="预约总额" value={currency.format(appointmentTotal || customer.amount || 0)} />
-          <DetailItem icon={Clock3} label="服务次数" value={`${linkedAppointments.length || customer.sessions || 0} 次`} />
+          <DetailItem icon="phone" label="联系电话" value={customer.phone || '未填写'} />
+          <DetailItem icon="calendar" label="修复日期" value={customer.repairDate || '未设置'} />
+          <DetailItem icon="wallet" label="预约总额" value={currency.format(appointmentTotal || customer.amount || 0)} />
+          <DetailItem icon="clock" label="服务次数" value={`${linkedAppointments.length || customer.sessions || 0} 次`} />
         </div>
 
         <div className="detail-notes">
-          <header><MessageCircle size={17} /><h2>登记备注</h2></header>
+          <header><CuteIcon name="note" size={17} /><h2>登记备注</h2></header>
           <p className={customer.skinNotes ? '' : 'empty'}>{customer.skinNotes || '无备注'}</p>
         </div>
       </section>
 
-      <section className="detail-gallery-section" aria-label="客户照片库">
-        <header className="detail-section-heading">
-          <div><h2>客户照片</h2><p>{photos.length ? `共 ${photos.length} 张` : '还没有客户照片'}</p></div>
-          <label className={`secondary-button detail-photo-picker${photoBusy ? ' disabled' : ''}`}>
-            <input className="visually-hidden-input" type="file" accept="image/*" multiple onChange={addPhotos} disabled={photoBusy} />
-            <ImagePlus size={17} />{photoBusy ? '处理中...' : '添加照片'}
-          </label>
-        </header>
-
-        {photos.length ? (
-          <div className="detail-photo-grid">
-            {photos.map((photo, index) => (
-              <button type="button" key={`${photo.slice(-24)}-${index}`} onClick={() => setViewerIndex(index)} aria-label={`查看第 ${index + 1} 张客户照片大图`}>
-                <img src={photo} alt={`${customer.name}的客户照片 ${index + 1}`} />
-                <span><Maximize2 size={16} /></span>
-              </button>
+      <button className="customer-photo-preview-module surface" type="button" onClick={onOpenPhotos} aria-label="打开客户照片管理">
+        <span className="customer-photo-preview-heading">
+          <span><CuteIcon name="images" size={19} /></span>
+          <span><strong>客户照片</strong><small>{photos.length ? `共 ${photos.length} 张` : '还没有客户照片'}</small></span>
+          <span>管理<CuteIcon name="right" size={18} /></span>
+        </span>
+        {previewPhotos.length ? (
+          <span className="customer-photo-preview-grid">
+            {previewPhotos.map((photo, index) => (
+              <span className="customer-photo-preview-item" key={`${photo.slice(-24)}-${index}`}>
+                <img src={photo} alt={`${customer.name}的客户照片预览 ${index + 1}`} />
+                {index === 1 && photos.length > 2 ? <span className="customer-photo-overflow">+{photos.length - 2}</span> : null}
+              </span>
             ))}
-          </div>
+          </span>
         ) : (
-          <label className="detail-photo-empty surface">
-            <input className="visually-hidden-input" type="file" accept="image/*" multiple onChange={addPhotos} disabled={photoBusy} />
-            <ImagePlus size={25} />
-            <strong>{photoBusy ? '正在处理照片...' : '添加客户照片'}</strong>
-            <span>可一次选择多张，预约完成后也能继续添加</span>
-          </label>
+          <span className="customer-photo-preview-empty"><CuteIcon name="images" size={23} /><span>进入照片管理添加照片</span></span>
         )}
-      </section>
+      </button>
 
       <section className="customer-appointments-section">
         <header className="detail-section-heading">
@@ -192,35 +141,27 @@ export function CustomerDetailPage({
                     <small>{format(scheduledAt, 'yyyy年M月d日 EEEE HH:mm', { locale: zhCN })}</small>
                   </span>
                   <span className={`status-badge ${appointment.status}`}>{statusLabels[appointment.status]}</span>
-                  <ChevronRight size={18} aria-hidden="true" />
+                  <CuteIcon name="right" size={18} />
                 </button>
               )
             })}
           </div>
         ) : (
           <div className="customer-appointments-empty surface">
-            <CalendarDays size={22} />
+            <CuteIcon name="calendar" size={22} />
             <div><strong>暂无关联预约</strong><p>使用同一微信号新增预约后会显示在这里</p></div>
           </div>
         )}
       </section>
 
-      <PhotoLightbox
-        name={customer.name}
-        photos={photos}
-        activeIndex={viewerIndex}
-        onClose={() => setViewerIndex(null)}
-        onPrevious={showPrevious}
-        onNext={showNext}
-      />
     </section>
   )
 }
 
-function DetailItem({ icon: Icon, label, value }: { icon: typeof Phone; label: string; value: string }) {
+function DetailItem({ icon, label, value }: { icon: CuteIconName; label: string; value: string }) {
   return (
     <article className="detail-info-item">
-      <span><Icon size={18} /></span>
+      <span><CuteIcon name={icon} size={18} /></span>
       <div><small>{label}</small><strong>{value}</strong></div>
     </article>
   )

@@ -2,23 +2,15 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { addHours, format, isSameDay, startOfDay } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import {
-  CalendarDays,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Trash2,
-  UserRound
-} from 'lucide-react'
 import { DayPicker } from 'react-day-picker'
+import { CuteIcon } from '../components/CuteIcon'
 import { Modal } from '../components/Modal'
 import { EmptyState, PageHeader } from '../components/PageElements'
 import { db } from '../db'
 import { AppointmentDetailPage } from './AppointmentDetailPage'
 import { customerPhotos } from '../lib/customerPhotos'
 import { createId } from '../lib/id'
-import type { AppointmentService, AppointmentStatus, CustomerRecord, Notify } from '../types'
+import type { AppointmentService, AppointmentStatus, Notify } from '../types'
 
 const statusLabels: Record<AppointmentStatus, string> = {
   upcoming: '待服务',
@@ -238,7 +230,7 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onO
         eyebrow="SCHEDULE"
         title="预约"
         subtitle="按日期安排护理与服务"
-        action={<button className="action-button" type="button" onClick={openForm}><Plus size={17} />新增</button>}
+        action={<button className="action-button" type="button" onClick={openForm}><CuteIcon name="plus" size={17} />新增</button>}
       />
 
       <section className={`calendar-panel surface${calendarOpen ? ' expanded' : ' collapsed'}`} aria-label="预约日历">
@@ -249,9 +241,9 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onO
           aria-controls="appointment-calendar-content"
           onClick={() => setCalendarOpen((current) => !current)}
         >
-          <span className="round-icon coral"><CalendarDays size={17} /></span>
+          <span className="round-icon coral"><CuteIcon name="calendar" size={17} /></span>
           <span className="calendar-toggle-copy"><small>{calendarOpen ? '收起日历' : '展开日历'}</small><strong>{format(selectedDate, 'M月d日 EEEE', { locale: zhCN })}</strong></span>
-          <ChevronDown className="calendar-toggle-icon" size={19} aria-hidden="true" />
+          <CuteIcon className="calendar-toggle-icon" name="down" size={19} />
         </button>
         {calendarOpen ? (
           <div className="calendar-content" id="appointment-calendar-content">
@@ -275,8 +267,7 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onO
               modifiersClassNames={{ hasAppointment: 'has-appointment' }}
               components={{
                 Chevron: ({ className, orientation }) => {
-                  const Icon = orientation === 'left' ? ChevronLeft : ChevronRight
-                  return <Icon className={className} size={18} />
+                  return <CuteIcon className={className} name={orientation === 'left' ? 'left' : 'right'} size={18} />
                 }
               }}
             />
@@ -304,7 +295,7 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onO
       </section>
 
       {appointmentsForDay.length === 0 ? (
-        <EmptyState icon={CalendarDays} title="当天没有预约" message="选择其他日期，或点击右上角新增预约" />
+        <EmptyState icon="calendar" title="当天没有预约" message="选择其他日期，或点击右上角新增预约" />
       ) : (
         <section className="appointment-table" aria-label="当日预约列表">
           <div className="appointment-list-header" aria-hidden="true">
@@ -334,7 +325,7 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onO
                       {photos.length > 1 ? <small>{photos.length}</small> : null}
                     </span>
                   ) : (
-                    <span className="appointment-photo placeholder" aria-label="无照片"><UserRound size={20} /></span>
+                    <span className="appointment-photo placeholder" aria-label="无照片"><CuteIcon name="user" size={20} /></span>
                   )}
                   <p className={`appointment-notes${appointment.notes ? '' : ' empty'}`} title={appointment.notes || '无备注'}>{appointment.notes || '无备注'}</p>
                   <p className={`appointment-cancel-reason${appointment.cancelReason ? '' : ' empty'}`} title={appointment.cancelReason || '无'}>{appointment.cancelReason || '无'}</p>
@@ -342,7 +333,7 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onO
                     {appointment.status === 'cancelled' ? (
                       <>
                         <span className="status-badge cancelled" aria-label={`${name}的预约状态：已取消`}>已取消</span>
-                        <button className="danger-icon-button" type="button" onClick={() => remove(appointment.id)} aria-label="删除预约" title="删除预约"><Trash2 size={17} /></button>
+                        <button className="danger-icon-button" type="button" onClick={() => remove(appointment.id)} aria-label="删除预约" title="删除预约"><CuteIcon name="delete" size={17} /></button>
                       </>
                     ) : (
                       <>
@@ -354,7 +345,7 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onO
                         >
                           {statusTransitions[appointment.status].map((value) => <option key={value} value={value}>{statusLabels[value]}</option>)}
                         </select>
-                        {appointment.status === 'upcoming' ? <button className="danger-icon-button" type="button" onClick={() => remove(appointment.id)} aria-label="删除预约" title="删除预约"><Trash2 size={17} /></button> : null}
+                        {appointment.status === 'upcoming' ? <button className="danger-icon-button" type="button" onClick={() => remove(appointment.id)} aria-label="删除预约" title="删除预约"><CuteIcon name="delete" size={17} /></button> : null}
                       </>
                     )}
                   </div>
@@ -365,18 +356,25 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onO
         </section>
       )}
 
-      <Modal title="新增预约" open={open} onClose={close}>
+      <Modal title="新增预约" open={open} onClose={close} className="appointment-modal">
         <form className="data-form appointment-form" onSubmit={submit} noValidate>
-          <label className="full-field" htmlFor="appointment-customer">
-            选择已登记客户
-            <select id="appointment-customer" required value={selectedCustomerId} onChange={(event) => setSelectedCustomerId(event.target.value)}>
-              <option value="">请选择客户</option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>{customer.name}{customer.wechatId ? ` · ${customer.wechatId}` : ''}</option>
-              ))}
-            </select>
-          </label>
-          {selectedCustomerId ? <SelectedCustomer customer={customersById.get(selectedCustomerId)} /> : null}
+          <fieldset className="appointment-customer-picker full-field" id="appointment-customer">
+            <legend>选择已登记客户</legend>
+            <div className="appointment-customer-options">
+              {customers.map((customer) => {
+                const photos = customerPhotos(customer)
+                const selected = selectedCustomerId === customer.id
+                return (
+                  <label className={selected ? 'selected' : ''} key={customer.id}>
+                    <input type="radio" name="appointment-customer" value={customer.id} checked={selected} onChange={() => setSelectedCustomerId(customer.id)} />
+                    {photos[0] ? <img src={photos[0]} alt="" /> : <span className="appointment-customer-avatar" aria-hidden="true"><CuteIcon name="user" size={20} /></span>}
+                    <span className="appointment-customer-copy"><strong>{customer.name}</strong><small>{customer.phone || '未填写电话'}{customer.wechatId ? ` · ${customer.wechatId}` : ''}</small></span>
+                    <span className="appointment-customer-check" aria-hidden="true"><CuteIcon name="check" size={16} /></span>
+                  </label>
+                )
+              })}
+            </div>
+          </fieldset>
           <label htmlFor="appointment-date">预约日期<input id="appointment-date" required type="date" value={appointmentDate} onChange={(event) => setAppointmentDate(event.target.value)} /></label>
           <label htmlFor="appointment-time">预约时间<input id="appointment-time" required type="time" value={appointmentTime} onChange={(event) => setAppointmentTime(event.target.value)} /></label>
 
@@ -429,15 +427,4 @@ function StatusCount({ label, value, tone }: { label: string; value: number; ton
 
 function normalizeIdentity(value: string | undefined) {
   return (value || '').trim().toLocaleLowerCase('zh-CN')
-}
-
-function SelectedCustomer({ customer }: { customer: CustomerRecord | undefined }) {
-  if (!customer) return null
-  const photos = customerPhotos(customer)
-  return (
-    <div className="selected-customer-summary full-field">
-      {photos[0] ? <img src={photos[0]} alt={`${customer.name}的客户照片`} /> : <span aria-hidden="true"><UserRound size={20} /></span>}
-      <div><strong>{customer.name}</strong><small>{customer.phone || '未填写电话'}{customer.wechatId ? ` · ${customer.wechatId}` : ''}</small></div>
-    </div>
-  )
 }

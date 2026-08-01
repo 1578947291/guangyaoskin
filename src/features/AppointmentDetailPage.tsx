@@ -1,14 +1,6 @@
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import {
-  ArrowLeft,
-  CalendarDays,
-  Camera,
-  Clock3,
-  MessageCircle,
-  UserRound,
-  WalletCards
-} from 'lucide-react'
+import { CuteIcon, type CuteIconName } from '../components/CuteIcon'
 import type { Appointment, AppointmentService, AppointmentStatus } from '../types'
 
 const statusLabels: Record<AppointmentStatus, string> = {
@@ -45,7 +37,7 @@ export function AppointmentDetailPage({ appointment, onBack }: AppointmentDetail
     <section className="page appointment-detail-page">
       <header className="detail-page-header">
         <button className="icon-button detail-back-button" type="button" onClick={onBack} aria-label="返回预约列表" title="返回">
-          <ArrowLeft size={20} />
+          <CuteIcon name="back" size={20} />
         </button>
         <div>
           <p>APPOINTMENT DETAIL</p>
@@ -56,7 +48,7 @@ export function AppointmentDetailPage({ appointment, onBack }: AppointmentDetail
 
       <section className="detail-summary-panel surface" aria-label="预约资料总览">
         <div className="detail-identity">
-          <span className="detail-avatar"><UserRound size={26} /></span>
+          <span className="detail-avatar"><CuteIcon name="user" size={26} /></span>
           <div>
             <h2>{name}</h2>
             <p>{appointment.wechatId || '未填写微信号'}</p>
@@ -64,14 +56,14 @@ export function AppointmentDetailPage({ appointment, onBack }: AppointmentDetail
         </div>
 
         <div className="detail-info-grid" aria-label="预约信息">
-          <DetailItem icon={CalendarDays} label="预约日期" value={format(scheduledAt, 'yyyy年M月d日 EEEE', { locale: zhCN })} />
-          <DetailItem icon={Clock3} label="预约时间" value={format(scheduledAt, 'HH:mm')} />
-          <DetailItem icon={Camera} label="预约项目" value={serviceName || '未设置'} />
-          <DetailItem icon={WalletCards} label="预约金额" value={appointment.amount ? currency.format(appointment.amount) : '未记账'} />
+          <DetailItem icon="calendar" label="预约日期" value={format(scheduledAt, 'yyyy年M月d日 EEEE', { locale: zhCN })} />
+          <DetailItem icon="clock" label="预约时间" value={format(scheduledAt, 'HH:mm')} />
+          <DetailItem icon="service" label="预约项目" value={serviceName || '未设置'} />
+          <DetailItem icon="wallet" label="预约金额" value={appointment.amount ? currency.format(appointment.amount) : '未记账'} />
         </div>
 
         <div className="detail-notes">
-          <header><MessageCircle size={17} /><h2>备注</h2></header>
+          <header><CuteIcon name="note" size={17} /><h2>备注</h2></header>
           <p className={appointment.notes ? '' : 'empty'}>{appointment.notes || '无备注'}</p>
         </div>
 
@@ -87,10 +79,10 @@ export function AppointmentDetailPage({ appointment, onBack }: AppointmentDetail
   )
 }
 
-function DetailItem({ icon: Icon, label, value }: { icon: typeof CalendarDays; label: string; value: string }) {
+function DetailItem({ icon, label, value }: { icon: CuteIconName; label: string; value: string }) {
   return (
     <article className="detail-info-item">
-      <span><Icon size={18} /></span>
+      <span><CuteIcon name={icon} size={18} /></span>
       <div><small>{label}</small><strong>{value}</strong></div>
     </article>
   )

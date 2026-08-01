@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Camera, Search, Trash2, UserPlus, UserRound, X } from 'lucide-react'
+import { CuteIcon } from '../components/CuteIcon'
 import { Modal } from '../components/Modal'
 import { EmptyState, PageHeader } from '../components/PageElements'
 import { db } from '../db'
@@ -8,6 +8,7 @@ import { createId } from '../lib/id'
 import { preparePhoto } from '../lib/images'
 import type { AppointmentService, Notify } from '../types'
 import { CustomerDetailPage } from './CustomerDetailPage'
+import { CustomerPhotosPage } from './CustomerPhotosPage'
 
 const serviceLabels: Record<AppointmentService, string> = {
   experience: '体验',
@@ -40,20 +41,26 @@ interface RegistrationPageProps {
   notify: Notify
   customerId?: string
   appointmentId?: string
+  customerView?: 'photos'
   onOpenCustomer: (customerId: string) => void
   onOpenAppointment: (customerId: string, appointmentId: string) => void
+  onOpenPhotos: (customerId: string) => void
   onBackCustomer: () => void
   onBackAppointment: (customerId: string) => void
+  onBackPhotos: (customerId: string) => void
 }
 
 export function RegistrationPage({
   notify,
   customerId,
   appointmentId,
+  customerView,
   onOpenCustomer,
   onOpenAppointment,
+  onOpenPhotos,
   onBackCustomer,
-  onBackAppointment
+  onBackAppointment,
+  onBackPhotos
 }: RegistrationPageProps) {
   const customers = useLiveQuery(() => db.customers.orderBy('createdAt').reverse().toArray(), []) ?? []
   const [search, setSearch] = useState('')
@@ -98,8 +105,8 @@ export function RegistrationPage({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!name.trim() || !phone.trim() || !wechatId.trim()) {
-      notify('请完整填写姓名、电话和微信号')
+    if (!name.trim() || !wechatId.trim()) {
+      notify('请完整填写姓名和微信号')
       return
     }
     const amount = serviceType === 'experience' ? 1380 : Number(customAmount)
@@ -163,14 +170,18 @@ export function RegistrationPage({
     ? customers.find((customer) => customer.id === customerId)
     : undefined
 
+  if (detailCustomer && customerView === 'photos') {
+    return <CustomerPhotosPage customer={detailCustomer} notify={notify} onBack={() => onBackPhotos(detailCustomer.id)} />
+  }
+
   if (detailCustomer) {
     return (
       <CustomerDetailPage
         customer={detailCustomer}
-        notify={notify}
         appointmentId={appointmentId}
         onBack={onBackCustomer}
         onOpenAppointment={(selectedAppointmentId) => onOpenAppointment(detailCustomer.id, selectedAppointmentId)}
+        onOpenPhotos={() => onOpenPhotos(detailCustomer.id)}
         onBackAppointment={() => onBackAppointment(detailCustomer.id)}
       />
     )
@@ -182,20 +193,20 @@ export function RegistrationPage({
         eyebrow="CLIENTS"
         title="登记"
         subtitle="顾客项目与修复记录"
-        action={<button className="action-button" type="button" onClick={() => setOpen(true)}><UserPlus size={17} />新增</button>}
+        action={<button className="action-button" type="button" onClick={() => setOpen(true)}><CuteIcon name="userAdd" size={17} />新增</button>}
       />
 
       <label className="search-box registration-search">
-        <Search size={18} aria-hidden="true" />
+        <CuteIcon name="search" size={18} />
         <span className="sr-only">搜索姓名、电话、微信号或项目</span>
         <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索姓名、电话、微信号或项目" />
-        {search ? <button type="button" onClick={() => setSearch('')} aria-label="清除搜索" title="清除搜索"><X size={17} /></button> : null}
+        {search ? <button type="button" onClick={() => setSearch('')} aria-label="清除搜索" title="清除搜索"><CuteIcon name="close" size={17} /></button> : null}
       </label>
 
       {customers.length === 0 ? (
-        <EmptyState icon={UserPlus} title="还没有顾客登记" message="点击右上角新增第一条登记" />
+        <EmptyState icon="userAdd" title="还没有顾客登记" message="点击右上角新增第一条登记" />
       ) : filtered.length === 0 ? (
-        <EmptyState icon={Search} title="没有匹配结果" message="换一个姓名、电话、微信号或项目试试" />
+        <EmptyState icon="search" title="没有匹配结果" message="换一个姓名、电话、微信号或项目试试" />
       ) : (
         <div className="record-list customer-list">
           {filtered.map((customer) => {
@@ -206,7 +217,7 @@ export function RegistrationPage({
                 {customer.photoDataUrl ? (
                   <img className="registration-photo" src={customer.photoDataUrl} alt={`${customer.name}的登记照片`} />
                 ) : (
-                  <span className="registration-photo placeholder" aria-hidden="true"><UserRound size={25} /></span>
+                  <span className="registration-photo placeholder" aria-hidden="true"><CuteIcon name="user" size={25} /></span>
                 )}
                 <div className="record-copy registration-copy">
                   <div className="record-title-line">
@@ -218,57 +229,70 @@ export function RegistrationPage({
                     <small>{customer.amount ? currency.format(customer.amount) : ''}{customer.amount && customer.sessions ? ' · ' : ''}{customer.sessions ? `${customer.sessions} 次` : ''}</small>
                   ) : null}
                 </div>
-                <button className="danger-icon-button" type="button" onClick={() => remove(customer.id)} aria-label="删除顾客登记" title="删除顾客登记"><Trash2 size={17} /></button>
+                <button className="danger-icon-button" type="button" onClick={() => remove(customer.id)} aria-label="删除顾客登记" title="删除顾客登记"><CuteIcon name="delete" size={17} /></button>
               </article>
             )
           })}
         </div>
       )}
 
-      <Modal title="新增登记" open={open} onClose={close}>
-        <form className="data-form registration-form" onSubmit={submit}>
-          <label htmlFor="registration-name">姓名<input id="registration-name" required value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" /></label>
-          <label htmlFor="registration-phone">电话<input id="registration-phone" required value={phone} onChange={(event) => setPhone(event.target.value)} inputMode="tel" autoComplete="tel" /></label>
-          <label className="full-field" htmlFor="registration-wechat">微信号<input id="registration-wechat" required value={wechatId} onChange={(event) => setWechatId(event.target.value)} autoCapitalize="none" /></label>
+      <Modal title="新增登记" open={open} onClose={close} className="registration-modal">
+        <form className="data-form registration-form" onSubmit={submit} noValidate>
+          <section className="registration-form-section">
+            <h3>客户资料</h3>
+            <div className="registration-form-grid">
+              <label htmlFor="registration-name"><span className="form-label">姓名<small>必填</small></span><input id="registration-name" required value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" /></label>
+              <label htmlFor="registration-phone"><span className="form-label">电话<small>选填</small></span><input id="registration-phone" value={phone} onChange={(event) => setPhone(event.target.value)} inputMode="tel" autoComplete="tel" /></label>
+              <label className="full-field" htmlFor="registration-wechat"><span className="form-label">微信号<small>必填</small></span><input id="registration-wechat" required value={wechatId} onChange={(event) => setWechatId(event.target.value)} autoCapitalize="none" /></label>
+            </div>
+          </section>
 
-          <fieldset className="segmented service-picker full-field">
-            <legend>项目</legend>
-            <label className={serviceType === 'experience' ? 'active' : ''}>
-              <input type="radio" name="registration-service" value="experience" checked={serviceType === 'experience'} onChange={() => setServiceType('experience')} />
-              <span>体验</span><small>固定 ￥1,380</small>
-            </label>
-            <label className={serviceType === 'full-face' ? 'active' : ''}>
-              <input type="radio" name="registration-service" value="full-face" checked={serviceType === 'full-face'} onChange={() => setServiceType('full-face')} />
-              <span>全脸</span><small>手动填写金额</small>
-            </label>
-          </fieldset>
+          <section className="registration-form-section">
+            <h3>服务信息</h3>
+            <div className="registration-form-grid">
+              <fieldset className="segmented service-picker full-field">
+                <legend>项目</legend>
+                <label className={serviceType === 'experience' ? 'active' : ''}>
+                  <input type="radio" name="registration-service" value="experience" checked={serviceType === 'experience'} onChange={() => setServiceType('experience')} />
+                  <span>体验</span><small>固定 ￥1,380</small>
+                </label>
+                <label className={serviceType === 'full-face' ? 'active' : ''}>
+                  <input type="radio" name="registration-service" value="full-face" checked={serviceType === 'full-face'} onChange={() => setServiceType('full-face')} />
+                  <span>全脸</span><small>手动填写金额</small>
+                </label>
+              </fieldset>
 
-          {serviceType === 'full-face' ? (
-            <label htmlFor="registration-amount">金额<input id="registration-amount" required type="number" min="0.01" step="0.01" inputMode="decimal" value={customAmount} onChange={(event) => setCustomAmount(event.target.value)} /></label>
-          ) : (
-            <div className="fixed-amount"><span>项目金额</span><strong>{currency.format(1380)}</strong><small>体验项目固定金额</small></div>
-          )}
-          <label htmlFor="registration-sessions">次数<input id="registration-sessions" required type="number" min="1" step="1" inputMode="numeric" value={sessions} onChange={(event) => setSessions(event.target.value)} /></label>
-          <label htmlFor="registration-repair-date">修复日期<input id="registration-repair-date" required type="date" value={repairDate} onChange={(event) => setRepairDate(event.target.value)} /></label>
+              {serviceType === 'full-face' ? (
+                <label htmlFor="registration-amount">金额<input id="registration-amount" required type="number" min="0.01" step="0.01" inputMode="decimal" value={customAmount} onChange={(event) => setCustomAmount(event.target.value)} /></label>
+              ) : (
+                <div className="fixed-amount"><span>项目金额</span><strong>{currency.format(1380)}</strong><small>体验项目固定金额</small></div>
+              )}
+              <label htmlFor="registration-sessions">次数<input id="registration-sessions" required type="number" min="1" step="1" inputMode="numeric" value={sessions} onChange={(event) => setSessions(event.target.value)} /></label>
+              <label htmlFor="registration-repair-date">修复日期<input id="registration-repair-date" required type="date" value={repairDate} onChange={(event) => setRepairDate(event.target.value)} /></label>
+            </div>
+          </section>
 
-          <div className="photo-field full-field">
-            <span className="field-label">照片</span>
-            {photoDataUrl ? (
-              <div className="photo-preview">
-                <img src={photoDataUrl} alt="待保存的登记照片预览" />
-                <button className="danger-icon-button" type="button" onClick={() => setPhotoDataUrl('')} aria-label="移除照片" title="移除照片"><X size={17} /></button>
-              </div>
-            ) : (
-              <label className="photo-picker">
-                <input className="visually-hidden-input" type="file" accept="image/*" onChange={selectPhoto} disabled={photoBusy} />
-                <Camera size={20} />
-                <span>{photoBusy ? '正在处理照片...' : '选择或拍摄照片'}</span>
-                <small>照片将与本次登记关联</small>
-              </label>
-            )}
-          </div>
+          <section className="registration-form-section registration-media-section">
+            <h3>照片与备注</h3>
+            <div className="photo-field">
+              <span className="field-label">照片</span>
+              {photoDataUrl ? (
+                <div className="photo-preview">
+                  <img src={photoDataUrl} alt="待保存的登记照片预览" />
+                  <button className="danger-icon-button" type="button" onClick={() => setPhotoDataUrl('')} aria-label="移除照片" title="移除照片"><CuteIcon name="close" size={17} /></button>
+                </div>
+              ) : (
+                <label className="photo-picker">
+                  <input className="visually-hidden-input" type="file" accept="image/*" onChange={selectPhoto} disabled={photoBusy} />
+                  <CuteIcon name="camera" size={20} />
+                  <span>{photoBusy ? '正在处理照片...' : '选择或拍摄照片'}</span>
+                  <small>照片将与本次登记关联</small>
+                </label>
+              )}
+            </div>
 
-          <label className="full-field" htmlFor="registration-notes">备注（可选）<textarea id="registration-notes" value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} placeholder="记录肤质、护理重点或其他说明" /></label>
+            <label htmlFor="registration-notes"><span className="form-label">备注<small>选填</small></span><textarea id="registration-notes" value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} placeholder="记录肤质、护理重点或其他说明" /></label>
+          </section>
           <div className="form-actions full-field">
             <button className="secondary-button" type="button" onClick={close}>取消</button>
             <button className="primary-button" type="submit" disabled={photoBusy || saving}>{saving ? '正在保存...' : '保存登记'}</button>

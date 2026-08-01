@@ -8,6 +8,9 @@ const homeSource = await readFile(new URL('../src/features/HomePage.tsx', import
 test('appointment form only selects an existing registered customer', () => {
   assert.match(source, /id="appointment-customer"/)
   assert.match(source, /customers\.map\(\(customer\)/)
+  assert.match(source, /className="appointment-customer-options"/)
+  assert.match(source, /type="radio" name="appointment-customer"/)
+  assert.match(source, /onChange=\{\(\) => setSelectedCustomerId\(customer\.id\)\}/)
   assert.match(source, /customerId: member\.id/)
   assert.doesNotMatch(source, /id="appointment-nickname"/)
   assert.doesNotMatch(source, /id="appointment-wechat-id"/)

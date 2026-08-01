@@ -6,6 +6,7 @@ const appointmentList = await readFile(new URL('../src/features/AppointmentsPage
 const appointmentDetail = await readFile(new URL('../src/features/AppointmentDetailPage.tsx', import.meta.url), 'utf8')
 const registrationList = await readFile(new URL('../src/features/RegistrationPage.tsx', import.meta.url), 'utf8')
 const customerDetail = await readFile(new URL('../src/features/CustomerDetailPage.tsx', import.meta.url), 'utf8')
+const customerPhotos = await readFile(new URL('../src/features/CustomerPhotosPage.tsx', import.meta.url), 'utf8')
 const customerLinking = await readFile(new URL('../src/lib/customerAppointments.ts', import.meta.url), 'utf8')
 const migration = await readFile(new URL('../src/lib/dataMigration.ts', import.meta.url), 'utf8')
 const lightbox = await readFile(new URL('../src/components/PhotoLightbox.tsx', import.meta.url), 'utf8')
@@ -16,13 +17,17 @@ test('appointment list opens a detail page', () => {
   assert.match(appointmentList, /<AppointmentDetailPage/)
 })
 
-test('photo library belongs to customer detail, not appointment detail', () => {
+test('customer detail previews two photos and delegates management to a secondary page', () => {
   assert.doesNotMatch(appointmentDetail, /detail-gallery-section/)
   assert.doesNotMatch(appointmentDetail, /type="file"/)
-  assert.match(customerDetail, /aria-label="客户照片库"/)
-  assert.match(customerDetail, /type="file" accept="image\/\*" multiple/)
-  assert.match(customerDetail, /db\.customers\.update\(customer\.id/)
-  assert.match(customerDetail, /photoDataUrls: nextPhotos/)
+  assert.match(customerDetail, /const previewPhotos = photos\.slice\(0, 2\)/)
+  assert.match(customerDetail, /onClick=\{onOpenPhotos\}/)
+  assert.doesNotMatch(customerDetail, /type="file"/)
+  assert.match(customerPhotos, /type="file" accept="image\/\*" multiple/)
+  assert.match(customerPhotos, /db\.customers\.update\(customer\.id/)
+  assert.match(customerPhotos, /const removePhoto = async/)
+  assert.match(customerPhotos, /photoDataUrls: nextPhotos/)
+  assert.match(customerPhotos, /客户照片已删除/)
 })
 
 test('detail profile fields are grouped into one summary panel', () => {
@@ -37,11 +42,13 @@ test('photos open in a full-screen keyboard accessible viewer', () => {
   assert.match(lightbox, /event\.key === 'Escape'/)
   assert.match(lightbox, /event\.key === 'ArrowLeft'/)
   assert.match(lightbox, /event\.key === 'ArrowRight'/)
+  assert.match(customerPhotos, /<PhotoLightbox/)
 })
 
 test('registration list opens customer detail and its appointments', () => {
   assert.match(registrationList, /onOpenCustomer\(customer\.id\)/)
   assert.match(registrationList, /<CustomerDetailPage/)
+  assert.match(registrationList, /<CustomerPhotosPage/)
   assert.match(customerDetail, /customerAppointments\(customer, appointments\)/)
   assert.match(customerDetail, /onOpenAppointment\(appointment\.id\)/)
   assert.match(customerDetail, /<AppointmentDetailPage/)
@@ -54,6 +61,7 @@ test('detail pages use independent hash routes with safe back fallbacks', () => 
   assert.match(app, /state\.from === fallbackHash/)
   assert.match(app, /window\.history\.replaceState/)
   assert.match(app, /#finance\/summary/)
+  assert.match(app, /#registration\/\$\{encodeURIComponent\(customerId\)\}\/photos/)
   assert.doesNotMatch(app, /hidden=\{route\.section/)
 })
 
