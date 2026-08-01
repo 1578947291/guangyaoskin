@@ -11,6 +11,7 @@ export function customerAppointments(customer: CustomerRecord, appointments: App
 
   return appointments
     .filter((appointment) => {
+      if (appointment.customerId === customer.id) return true
       if (customer.appointmentId === appointment.id) return true
       const appointmentWechatId = normalizeIdentity(appointment.wechatId)
       if (wechatId && appointmentWechatId) return wechatId === appointmentWechatId

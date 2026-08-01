@@ -1,3 +1,4 @@
+import { useState, type ChangeEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
@@ -6,13 +7,18 @@ import {
   CalendarDays,
   ChevronRight,
   Clock3,
+  ImagePlus,
+  Maximize2,
   MessageCircle,
   Phone,
   UserRound,
   WalletCards
 } from 'lucide-react'
+import { PhotoLightbox } from '../components/PhotoLightbox'
 import { db } from '../db'
 import { customerAppointments } from '../lib/customerAppointments'
+import { customerPhotos } from '../lib/customerPhotos'
+import { preparePhoto } from '../lib/images'
 import type { AppointmentService, AppointmentStatus, CustomerRecord, Notify } from '../types'
 import { AppointmentDetailPage } from './AppointmentDetailPage'
 
@@ -52,16 +58,18 @@ export function CustomerDetailPage({
   onBackAppointment
 }: CustomerDetailPageProps) {
   const appointments = useLiveQuery(() => db.appointments.toArray(), []) ?? []
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null)
+  const photos = customerPhotos(customer)
   const linkedAppointments = customerAppointments(customer, appointments)
   const selectedAppointment = appointmentId
-    ? appointments.find((appointment) => appointment.id === appointmentId)
+    ? linkedAppointments.find((appointment) => appointment.id === appointmentId)
     : undefined
 
   if (selectedAppointment) {
     return (
       <AppointmentDetailPage
         appointment={selectedAppointment}
-        notify={notify}
         onBack={onBackAppointment}
       />
     )
@@ -69,6 +77,34 @@ export function CustomerDetailPage({
 
   const appointmentTotal = linkedAppointments.reduce((sum, appointment) => sum + (appointment.amount || 0), 0)
   const serviceName = customer.serviceType ? serviceLabels[customer.serviceType] : '未设置项目'
+
+  const addPhotos = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+    event.target.value = ''
+    if (!files.length) return
+
+    setPhotoBusy(true)
+    try {
+      const addedPhotos = await Promise.all(files.map(preparePhoto))
+      const nextPhotos = Array.from(new Set([...photos, ...addedPhotos]))
+      await db.customers.update(customer.id, {
+        photoDataUrl: nextPhotos[0],
+        photoDataUrls: nextPhotos
+      })
+      notify(`已添加 ${addedPhotos.length} 张客户照片`)
+    } catch (error) {
+      notify(error instanceof Error ? error.message : '照片处理失败')
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
+
+  const showPrevious = () => setViewerIndex((current) => current === null
+    ? null
+    : (current - 1 + photos.length) % photos.length)
+  const showNext = () => setViewerIndex((current) => current === null
+    ? null
+    : (current + 1) % photos.length)
 
   return (
     <section className="page customer-detail-page">
@@ -82,8 +118,8 @@ export function CustomerDetailPage({
 
       <section className="detail-summary-panel surface" aria-label="用户资料总览">
         <div className="customer-detail-hero">
-          {customer.photoDataUrl ? (
-            <img src={customer.photoDataUrl} alt={`${customer.name}的登记照片`} />
+          {photos[0] ? (
+            <img src={photos[0]} alt={`${customer.name}的客户照片`} />
           ) : (
             <span className="customer-detail-avatar" aria-hidden="true"><UserRound size={30} /></span>
           )}
@@ -104,6 +140,34 @@ export function CustomerDetailPage({
           <header><MessageCircle size={17} /><h2>登记备注</h2></header>
           <p className={customer.skinNotes ? '' : 'empty'}>{customer.skinNotes || '无备注'}</p>
         </div>
+      </section>
+
+      <section className="detail-gallery-section" aria-label="客户照片库">
+        <header className="detail-section-heading">
+          <div><h2>客户照片</h2><p>{photos.length ? `共 ${photos.length} 张` : '还没有客户照片'}</p></div>
+          <label className={`secondary-button detail-photo-picker${photoBusy ? ' disabled' : ''}`}>
+            <input className="visually-hidden-input" type="file" accept="image/*" multiple onChange={addPhotos} disabled={photoBusy} />
+            <ImagePlus size={17} />{photoBusy ? '处理中...' : '添加照片'}
+          </label>
+        </header>
+
+        {photos.length ? (
+          <div className="detail-photo-grid">
+            {photos.map((photo, index) => (
+              <button type="button" key={`${photo.slice(-24)}-${index}`} onClick={() => setViewerIndex(index)} aria-label={`查看第 ${index + 1} 张客户照片大图`}>
+                <img src={photo} alt={`${customer.name}的客户照片 ${index + 1}`} />
+                <span><Maximize2 size={16} /></span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <label className="detail-photo-empty surface">
+            <input className="visually-hidden-input" type="file" accept="image/*" multiple onChange={addPhotos} disabled={photoBusy} />
+            <ImagePlus size={25} />
+            <strong>{photoBusy ? '正在处理照片...' : '添加客户照片'}</strong>
+            <span>可一次选择多张，预约完成后也能继续添加</span>
+          </label>
+        )}
       </section>
 
       <section className="customer-appointments-section">
@@ -140,6 +204,15 @@ export function CustomerDetailPage({
           </div>
         )}
       </section>
+
+      <PhotoLightbox
+        name={customer.name}
+        photos={photos}
+        activeIndex={viewerIndex}
+        onClose={() => setViewerIndex(null)}
+        onPrevious={showPrevious}
+        onNext={showNext}
+      />
     </section>
   )
 }

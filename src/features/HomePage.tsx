@@ -87,6 +87,10 @@ function dateKey(value: string) {
 }
 
 function linkedAppointment(customer: CustomerRecord, appointments: Appointment[]) {
+  const byCustomerId = appointments
+    .filter((appointment) => appointment.customerId === customer.id)
+    .sort((first, second) => second.scheduledAt.localeCompare(first.scheduledAt))[0]
+  if (byCustomerId) return byCustomerId
   const linked = customer.appointmentId
     ? appointments.find((appointment) => appointment.id === customer.appointmentId)
     : undefined
@@ -121,7 +125,7 @@ export function HomePage({ notify }: HomePageProps) {
     .filter((entry) => entry.kind === 'income' && entry.appointmentId && todayAppointmentIds.has(entry.appointmentId))
     .reduce((sum, entry) => sum + entry.amount, 0)
   const todayCustomers = new Set(
-    todayAppointments.map((appointment) => customerKey(appointment.wechatId, appointment.customerName))
+    todayAppointments.map((appointment) => appointment.customerId || customerKey(appointment.wechatId, appointment.customerName))
   ).size
 
   const pendingRepairs = customers

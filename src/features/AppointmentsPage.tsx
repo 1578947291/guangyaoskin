@@ -1,32 +1,35 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { addHours, format, isSameDay, startOfDay } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import {
   CalendarDays,
-  Camera,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Plus,
   Trash2,
-  UserRound,
-  X
+  UserRound
 } from 'lucide-react'
 import { DayPicker } from 'react-day-picker'
 import { Modal } from '../components/Modal'
 import { EmptyState, PageHeader } from '../components/PageElements'
 import { db } from '../db'
 import { AppointmentDetailPage } from './AppointmentDetailPage'
-import { appointmentPhotos } from '../lib/appointmentPhotos'
+import { customerPhotos } from '../lib/customerPhotos'
 import { createId } from '../lib/id'
-import { preparePhoto } from '../lib/images'
-import type { AppointmentService, AppointmentStatus, Notify } from '../types'
+import type { AppointmentService, AppointmentStatus, CustomerRecord, Notify } from '../types'
 
 const statusLabels: Record<AppointmentStatus, string> = {
   upcoming: '待服务',
   completed: '已完成',
   cancelled: '已取消'
+}
+
+const statusTransitions: Record<AppointmentStatus, AppointmentStatus[]> = {
+  upcoming: ['upcoming', 'completed', 'cancelled'],
+  completed: ['completed', 'cancelled'],
+  cancelled: ['cancelled']
 }
 
 const serviceLabels: Record<AppointmentService, string> = {
@@ -53,24 +56,23 @@ interface AppointmentsPageProps {
   notify: Notify
   appointmentId?: string
   onOpenAppointment: (appointmentId: string) => void
+  onOpenRegistration: () => void
   onBack: () => void
 }
 
-export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onBack }: AppointmentsPageProps) {
+export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onOpenRegistration, onBack }: AppointmentsPageProps) {
   const appointments = useLiveQuery(() => db.appointments.orderBy('scheduledAt').toArray(), []) ?? []
+  const customers = useLiveQuery(() => db.customers.orderBy('name').toArray(), []) ?? []
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()))
   const [calendarMonth, setCalendarMonth] = useState(() => startOfDay(new Date()))
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [open, setOpen] = useState(false)
-  const [nickname, setNickname] = useState('')
-  const [wechatId, setWechatId] = useState('')
+  const [selectedCustomerId, setSelectedCustomerId] = useState('')
   const [notes, setNotes] = useState('')
   const [appointmentDate, setAppointmentDate] = useState(() => format(new Date(), 'yyyy-MM-dd'))
   const [appointmentTime, setAppointmentTime] = useState(defaultTime)
   const [appointmentType, setAppointmentType] = useState<AppointmentService>('experience')
   const [customAmount, setCustomAmount] = useState('')
-  const [photoDataUrl, setPhotoDataUrl] = useState('')
-  const [photoBusy, setPhotoBusy] = useState(false)
   const [saving, setSaving] = useState(false)
   const [cancelAppointmentId, setCancelAppointmentId] = useState<string | null>(null)
   const [cancelReason, setCancelReason] = useState('')
@@ -82,31 +84,35 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onB
   const appointmentsForDay = appointments.filter((appointment) =>
     isSameDay(new Date(appointment.scheduledAt), selectedDate)
   )
+  const customersById = new Map(customers.map((customer) => [customer.id, customer]))
 
   const reset = () => {
-    setNickname('')
-    setWechatId('')
+    setSelectedCustomerId('')
     setNotes('')
     setAppointmentDate(format(selectedDate, 'yyyy-MM-dd'))
     setAppointmentTime(defaultTime())
     setAppointmentType('experience')
     setCustomAmount('')
-    setPhotoDataUrl('')
-    setPhotoBusy(false)
   }
   const close = () => {
     setOpen(false)
     reset()
   }
   const openForm = () => {
+    if (!customers.length) {
+      notify('请先登记客户，再创建预约')
+      onOpenRegistration()
+      return
+    }
     setAppointmentDate(format(selectedDate, 'yyyy-MM-dd'))
     setOpen(true)
   }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!nickname.trim() || !wechatId.trim()) {
-      notify('请完整填写昵称和微信号')
+    const member = customersById.get(selectedCustomerId)
+    if (!member) {
+      notify('请选择已登记客户')
       return
     }
     const amount = appointmentType === 'experience' ? 1380 : Number(customAmount)
@@ -123,15 +129,16 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onB
     const appointmentId = createId()
     const createdAt = new Date().toISOString()
     const serviceName = serviceLabels[appointmentType]
-    const memberName = nickname.trim()
-    const memberWechatId = wechatId.trim()
+    const memberName = member.name
+    const memberWechatId = member.wechatId || ''
     setSaving(true)
     try {
       await db.transaction('rw', db.appointments, db.ledgerEntries, db.customers, async () => {
         await db.appointments.add({
           id: appointmentId,
+          customerId: member.id,
           customerName: memberName,
-          phone: '',
+          phone: member.phone,
           serviceName,
           scheduledAt: scheduledDate.toISOString(),
           notes: notes.trim(),
@@ -140,9 +147,7 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onB
           nickname: memberName,
           wechatId: memberWechatId,
           appointmentType,
-          amount,
-          photoDataUrl: photoDataUrl || undefined,
-          photoDataUrls: photoDataUrl ? [photoDataUrl] : undefined
+          amount
         })
         await db.ledgerEntries.add({
           id: createId(),
@@ -155,63 +160,24 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onB
           appointmentId
         })
 
-        const normalizedWechatId = memberWechatId.toLocaleLowerCase('zh-CN')
-        const member = await db.customers
-          .filter((customer) => (customer.wechatId || '').trim().toLocaleLowerCase('zh-CN') === normalizedWechatId)
-          .first()
-        if (member) {
-          await db.customers.update(member.id, {
-            appointmentId,
-            name: memberName,
-            wechatId: memberWechatId,
-            serviceType: appointmentType,
-            amount: (member.amount || 0) + amount,
-            sessions: (member.sessions || 0) + 1,
-            repairDate: appointmentDate,
-            repairStatus: 'pending',
-            photoDataUrl: photoDataUrl || member.photoDataUrl
-          })
-        } else {
-          await db.customers.add({
-            id: createId(),
-            appointmentId,
-            name: memberName,
-            phone: '',
-            skinNotes: '',
-            createdAt,
-            wechatId: memberWechatId,
-            serviceType: appointmentType,
-            amount,
-            sessions: 1,
-            repairDate: appointmentDate,
-            repairStatus: 'pending',
-            photoDataUrl: photoDataUrl || undefined
-          })
-        }
+        await db.customers.update(member.id, {
+          appointmentId,
+          serviceType: appointmentType,
+          amount: (member.amount || 0) + amount,
+          sessions: (member.sessions || 0) + 1,
+          repairDate: appointmentDate,
+          repairStatus: 'pending'
+        })
       })
 
       setSelectedDate(startOfDay(scheduledDate))
       setCalendarMonth(startOfDay(scheduledDate))
       close()
-      notify(`预约已保存，已记账并同步会员 ${currency.format(amount)}`)
+      notify(`已为${memberName}创建预约并记账 ${currency.format(amount)}`)
     } catch {
       notify('预约保存失败，请重试')
     } finally {
       setSaving(false)
-    }
-  }
-
-  const selectPhoto = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-    setPhotoBusy(true)
-    try {
-      setPhotoDataUrl(await preparePhoto(file))
-    } catch (error) {
-      notify(error instanceof Error ? error.message : '照片处理失败')
-    } finally {
-      setPhotoBusy(false)
     }
   }
 
@@ -229,8 +195,8 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onB
   const updateStatus = async (id: string, status: AppointmentStatus) => {
     const appointment = await db.appointments.get(id)
     if (!appointment) return
-    if (appointment.status === 'completed') {
-      notify('已完成预约不可更改状态')
+    if (!statusTransitions[appointment.status].includes(status)) {
+      notify('已取消预约不可更改状态')
       return
     }
     if (status === 'cancelled') {
@@ -263,7 +229,7 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onB
     : undefined
 
   if (detailAppointment) {
-    return <AppointmentDetailPage appointment={detailAppointment} notify={notify} onBack={onBack} />
+    return <AppointmentDetailPage appointment={detailAppointment} onBack={onBack} />
   }
 
   return (
@@ -351,7 +317,10 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onB
               const serviceName = appointment.appointmentType
                 ? serviceLabels[appointment.appointmentType]
                 : appointment.serviceName
-              const photos = appointmentPhotos(appointment)
+              const linkedCustomer = appointment.customerId
+                ? customersById.get(appointment.customerId)
+                : customers.find((customer) => normalizeIdentity(customer.wechatId) === normalizeIdentity(appointment.wechatId))
+              const photos = linkedCustomer ? customerPhotos(linkedCustomer) : []
               return (
                 <article className={`appointment-card surface ${appointment.status}`} key={appointment.id}>
                   <button className="appointment-detail-hitarea" type="button" onClick={() => onOpenAppointment(appointment.id)} aria-label={`查看${name}的预约详情`} />
@@ -370,8 +339,11 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onB
                   <p className={`appointment-notes${appointment.notes ? '' : ' empty'}`} title={appointment.notes || '无备注'}>{appointment.notes || '无备注'}</p>
                   <p className={`appointment-cancel-reason${appointment.cancelReason ? '' : ' empty'}`} title={appointment.cancelReason || '无'}>{appointment.cancelReason || '无'}</p>
                   <div className="appointment-actions">
-                    {appointment.status === 'completed' ? (
-                      <span className="status-badge completed" aria-label={`${name}的预约状态：已完成`}>已完成</span>
+                    {appointment.status === 'cancelled' ? (
+                      <>
+                        <span className="status-badge cancelled" aria-label={`${name}的预约状态：已取消`}>已取消</span>
+                        <button className="danger-icon-button" type="button" onClick={() => remove(appointment.id)} aria-label="删除预约" title="删除预约"><Trash2 size={17} /></button>
+                      </>
                     ) : (
                       <>
                         <select
@@ -380,9 +352,9 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onB
                           value={appointment.status}
                           onChange={(event) => updateStatus(appointment.id, event.target.value as AppointmentStatus)}
                         >
-                          {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                          {statusTransitions[appointment.status].map((value) => <option key={value} value={value}>{statusLabels[value]}</option>)}
                         </select>
-                        <button className="danger-icon-button" type="button" onClick={() => remove(appointment.id)} aria-label="删除预约" title="删除预约"><Trash2 size={17} /></button>
+                        {appointment.status === 'upcoming' ? <button className="danger-icon-button" type="button" onClick={() => remove(appointment.id)} aria-label="删除预约" title="删除预约"><Trash2 size={17} /></button> : null}
                       </>
                     )}
                   </div>
@@ -395,8 +367,16 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onB
 
       <Modal title="新增预约" open={open} onClose={close}>
         <form className="data-form appointment-form" onSubmit={submit} noValidate>
-          <label htmlFor="appointment-nickname">昵称<input id="appointment-nickname" required value={nickname} onChange={(event) => setNickname(event.target.value)} autoComplete="name" /></label>
-          <label htmlFor="appointment-wechat-id">微信号<input id="appointment-wechat-id" required value={wechatId} onChange={(event) => setWechatId(event.target.value)} autoCapitalize="none" /></label>
+          <label className="full-field" htmlFor="appointment-customer">
+            选择已登记客户
+            <select id="appointment-customer" required value={selectedCustomerId} onChange={(event) => setSelectedCustomerId(event.target.value)}>
+              <option value="">请选择客户</option>
+              {customers.map((customer) => (
+                <option key={customer.id} value={customer.id}>{customer.name}{customer.wechatId ? ` · ${customer.wechatId}` : ''}</option>
+              ))}
+            </select>
+          </label>
+          {selectedCustomerId ? <SelectedCustomer customer={customersById.get(selectedCustomerId)} /> : null}
           <label htmlFor="appointment-date">预约日期<input id="appointment-date" required type="date" value={appointmentDate} onChange={(event) => setAppointmentDate(event.target.value)} /></label>
           <label htmlFor="appointment-time">预约时间<input id="appointment-time" required type="time" value={appointmentTime} onChange={(event) => setAppointmentTime(event.target.value)} /></label>
 
@@ -420,26 +400,9 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onB
 
           <label className="full-field" htmlFor="appointment-notes">备注（可选）<textarea id="appointment-notes" value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} placeholder="记录护理需求或其他说明" /></label>
 
-          <div className="photo-field full-field">
-            <span className="field-label">顾客照片（可选）</span>
-            {photoDataUrl ? (
-              <div className="photo-preview">
-                <img src={photoDataUrl} alt="待保存的顾客照片预览" />
-                <button className="danger-icon-button" type="button" onClick={() => setPhotoDataUrl('')} aria-label="移除照片" title="移除照片"><X size={17} /></button>
-              </div>
-            ) : (
-              <label className="photo-picker">
-                <input className="visually-hidden-input" type="file" accept="image/*" onChange={selectPhoto} disabled={photoBusy} />
-                <Camera size={20} />
-                <span>{photoBusy ? '正在处理照片...' : '选择或拍摄照片'}</span>
-                <small>照片将与本次预约关联</small>
-              </label>
-            )}
-          </div>
-
           <div className="form-actions full-field">
             <button className="secondary-button" type="button" onClick={close}>取消</button>
-            <button className="primary-button" type="submit" disabled={photoBusy || saving}>{saving ? '正在保存...' : '保存预约并记账'}</button>
+            <button className="primary-button" type="submit" disabled={saving}>{saving ? '正在保存...' : '保存预约并记账'}</button>
           </div>
         </form>
       </Modal>
@@ -462,4 +425,19 @@ export function AppointmentsPage({ notify, appointmentId, onOpenAppointment, onB
 
 function StatusCount({ label, value, tone }: { label: string; value: number; tone: string }) {
   return <div><strong className={tone}>{value}</strong><span>{label}</span></div>
+}
+
+function normalizeIdentity(value: string | undefined) {
+  return (value || '').trim().toLocaleLowerCase('zh-CN')
+}
+
+function SelectedCustomer({ customer }: { customer: CustomerRecord | undefined }) {
+  if (!customer) return null
+  const photos = customerPhotos(customer)
+  return (
+    <div className="selected-customer-summary full-field">
+      {photos[0] ? <img src={photos[0]} alt={`${customer.name}的客户照片`} /> : <span aria-hidden="true"><UserRound size={20} /></span>}
+      <div><strong>{customer.name}</strong><small>{customer.phone || '未填写电话'}{customer.wechatId ? ` · ${customer.wechatId}` : ''}</small></div>
+    </div>
+  )
 }

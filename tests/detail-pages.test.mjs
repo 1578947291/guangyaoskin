@@ -7,6 +7,8 @@ const appointmentDetail = await readFile(new URL('../src/features/AppointmentDet
 const registrationList = await readFile(new URL('../src/features/RegistrationPage.tsx', import.meta.url), 'utf8')
 const customerDetail = await readFile(new URL('../src/features/CustomerDetailPage.tsx', import.meta.url), 'utf8')
 const customerLinking = await readFile(new URL('../src/lib/customerAppointments.ts', import.meta.url), 'utf8')
+const migration = await readFile(new URL('../src/lib/dataMigration.ts', import.meta.url), 'utf8')
+const lightbox = await readFile(new URL('../src/components/PhotoLightbox.tsx', import.meta.url), 'utf8')
 const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
 
 test('appointment list opens a detail page', () => {
@@ -14,11 +16,13 @@ test('appointment list opens a detail page', () => {
   assert.match(appointmentList, /<AppointmentDetailPage/)
 })
 
-test('appointment detail supports multiple photos after completion', () => {
-  assert.match(appointmentDetail, /type="file" accept="image\/\*" multiple/)
-  assert.match(appointmentDetail, /photoDataUrls: nextPhotos/)
-  assert.match(appointmentDetail, /订单已完成，仍可继续关联护理后的照片/)
-  assert.doesNotMatch(appointmentDetail, /appointment\.status !== 'completed'/)
+test('photo library belongs to customer detail, not appointment detail', () => {
+  assert.doesNotMatch(appointmentDetail, /detail-gallery-section/)
+  assert.doesNotMatch(appointmentDetail, /type="file"/)
+  assert.match(customerDetail, /aria-label="客户照片库"/)
+  assert.match(customerDetail, /type="file" accept="image\/\*" multiple/)
+  assert.match(customerDetail, /db\.customers\.update\(customer\.id/)
+  assert.match(customerDetail, /photoDataUrls: nextPhotos/)
 })
 
 test('detail profile fields are grouped into one summary panel', () => {
@@ -29,10 +33,10 @@ test('detail profile fields are grouped into one summary panel', () => {
 })
 
 test('photos open in a full-screen keyboard accessible viewer', () => {
-  assert.match(appointmentDetail, /className="photo-lightbox" role="dialog" aria-modal="true"/)
-  assert.match(appointmentDetail, /event\.key === 'Escape'/)
-  assert.match(appointmentDetail, /event\.key === 'ArrowLeft'/)
-  assert.match(appointmentDetail, /event\.key === 'ArrowRight'/)
+  assert.match(lightbox, /className="photo-lightbox" role="dialog" aria-modal="true"/)
+  assert.match(lightbox, /event\.key === 'Escape'/)
+  assert.match(lightbox, /event\.key === 'ArrowLeft'/)
+  assert.match(lightbox, /event\.key === 'ArrowRight'/)
 })
 
 test('registration list opens customer detail and its appointments', () => {
@@ -49,10 +53,25 @@ test('detail pages use independent hash routes with safe back fallbacks', () => 
   assert.match(app, /window\.history\.pushState/)
   assert.match(app, /state\.from === fallbackHash/)
   assert.match(app, /window\.history\.replaceState/)
+  assert.match(app, /#finance\/summary/)
   assert.doesNotMatch(app, /hidden=\{route\.section/)
 })
 
-test('customer appointment linking prefers stable ids and WeChat identity', () => {
+test('customer appointment linking prefers customer id and keeps legacy identity fallback', () => {
+  assert.match(customerLinking, /appointment\.customerId === customer\.id/)
   assert.match(customerLinking, /customer\.appointmentId === appointment\.id/)
   assert.match(customerLinking, /wechatId === appointmentWechatId/)
+})
+
+test('database migration moves legacy appointment photos onto customers', () => {
+  assert.match(migration, /migrateCustomerRelations/)
+  assert.match(migration, /customer\.photoDataUrls = uniquePhotos/)
+  assert.match(migration, /customerId: customer\.id/)
+})
+
+test('primary pages confirm exit while secondary pages use history back', () => {
+  assert.match(app, /guangYaoExitGuard/)
+  assert.match(app, /确定退出光曜塑肤吗/)
+  assert.match(app, /window\.history\.forward\(\)/)
+  assert.match(app, /state\.from === fallbackHash/)
 })

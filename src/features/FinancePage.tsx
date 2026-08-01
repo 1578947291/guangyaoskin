@@ -1,18 +1,16 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   ArrowDownLeft,
   ArrowUpRight,
-  Download,
-  FileUp,
   Plus,
+  ChevronRight,
   Trash2,
   TrendingUp
 } from 'lucide-react'
 import { Modal } from '../components/Modal'
 import { EmptyState, PageHeader } from '../components/PageElements'
 import { db } from '../db'
-import { createBackup, restoreBackup } from '../lib/backup'
 import { createId } from '../lib/id'
 import { ledgerOccurrence } from '../lib/ledger'
 import type { Appointment, LedgerKind, Notify } from '../types'
@@ -26,12 +24,12 @@ const currency = new Intl.NumberFormat('zh-CN', {
 
 interface FinancePageProps {
   notify: Notify
+  onOpenSummary: () => void
 }
 
-export function FinancePage({ notify }: FinancePageProps) {
+export function FinancePage({ notify, onOpenSummary }: FinancePageProps) {
   const entries = useLiveQuery(() => db.ledgerEntries.orderBy('occurredAt').reverse().toArray(), []) ?? []
   const appointments = useLiveQuery(() => db.appointments.toArray(), []) ?? []
-  const fileInput = useRef<HTMLInputElement>(null)
   const [open, setOpen] = useState(false)
   const [kind, setKind] = useState<LedgerKind>('income')
   const [title, setTitle] = useState('')
@@ -82,28 +80,6 @@ export function FinancePage({ notify }: FinancePageProps) {
     notify('收支记录已删除')
   }
 
-  const backup = async () => {
-    try {
-      await createBackup()
-      notify('备份文件已生成')
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return
-      notify('备份失败，请重试')
-    }
-  }
-
-  const restore = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file || !window.confirm('恢复备份会覆盖当前设备上的全部数据，确定继续吗？')) return
-    try {
-      await restoreBackup(file)
-      notify('备份恢复完成')
-    } catch (error) {
-      notify(error instanceof Error ? error.message : '恢复失败')
-    }
-  }
-
   return (
     <section className="page">
       <PageHeader
@@ -113,22 +89,16 @@ export function FinancePage({ notify }: FinancePageProps) {
         action={<button className="action-button" type="button" onClick={() => setOpen(true)}><Plus size={17} />新增</button>}
       />
 
-      <section className="balance-card surface">
+      <button className="balance-card balance-card-button surface" type="button" onClick={onOpenSummary} aria-label="查看本月结余明细">
         <div className="balance-heading">
           <div><span>本月结余</span><strong>{currency.format(income - expense)}</strong></div>
-          <span className="round-icon gold"><TrendingUp size={20} /></span>
+          <span className="balance-open-icon"><TrendingUp size={20} /><ChevronRight size={17} /></span>
         </div>
         <div className="balance-split">
           <BalanceItem label="收入" value={income} kind="income" />
           <BalanceItem label="支出" value={expense} kind="expense" />
         </div>
-      </section>
-
-      <div className="backup-actions" aria-label="数据备份">
-        <button className="secondary-button" type="button" onClick={backup}><Download size={16} />备份</button>
-        <button className="secondary-button" type="button" onClick={() => fileInput.current?.click()}><FileUp size={16} />恢复</button>
-        <input ref={fileInput} className="visually-hidden-input" type="file" accept="application/json,.json" onChange={restore} />
-      </div>
+      </button>
 
       {sortedEntries.length === 0 ? (
         <EmptyState icon={TrendingUp} title="还没有收支记录" message="点击右上角记录第一笔收入或支出" />

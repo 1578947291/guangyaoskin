@@ -1,4 +1,5 @@
 import { db } from '../db'
+import { migrateCustomerRelations } from './dataMigration'
 import type { Appointment, CustomerRecord, LedgerEntry } from '../types'
 
 interface BackupPayload {
@@ -69,6 +70,8 @@ export async function restoreBackup(file: File): Promise<void> {
     throw new Error('这不是有效的光曜塑肤备份文件')
   }
 
+  const migrated = migrateCustomerRelations(parsed.appointments, parsed.customers)
+
   await db.transaction(
     'rw',
     [db.appointments, db.customers, db.ledgerEntries],
@@ -78,8 +81,8 @@ export async function restoreBackup(file: File): Promise<void> {
         db.customers.clear(),
         db.ledgerEntries.clear()
       ])
-      await db.appointments.bulkAdd(parsed.appointments)
-      await db.customers.bulkAdd(parsed.customers)
+      await db.appointments.bulkAdd(migrated.appointments)
+      await db.customers.bulkAdd(migrated.customers)
       await db.ledgerEntries.bulkAdd(parsed.ledgerEntries)
     }
   )

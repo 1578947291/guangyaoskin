@@ -8,6 +8,7 @@ export type RepairStatus = 'pending' | 'completed' | 'cancelled'
 
 export interface Appointment {
   id: string
+  customerId?: string
   customerName: string
   phone: string
   serviceName: string
@@ -40,6 +41,7 @@ export interface CustomerRecord {
   repairDate?: string
   repairStatus?: RepairStatus
   photoDataUrl?: string
+  photoDataUrls?: string[]
   cancelReason?: string
 }
 

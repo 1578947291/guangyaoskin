@@ -127,7 +127,8 @@ export function RegistrationPage({
         sessions: sessionCount,
         repairDate,
         repairStatus: 'pending',
-        photoDataUrl: photoDataUrl || undefined
+        photoDataUrl: photoDataUrl || undefined,
+        photoDataUrls: photoDataUrl ? [photoDataUrl] : undefined
       })
       close()
       notify('顾客登记已保存')

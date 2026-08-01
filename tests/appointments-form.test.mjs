@@ -5,10 +5,13 @@ import test from 'node:test'
 const source = await readFile(new URL('../src/features/AppointmentsPage.tsx', import.meta.url), 'utf8')
 const homeSource = await readFile(new URL('../src/features/HomePage.tsx', import.meta.url), 'utf8')
 
-test('appointment form keeps one customer nickname field', () => {
-  assert.match(source, /id="appointment-nickname"/)
-  assert.doesNotMatch(source, /id="appointment-wechat-name"/)
-  assert.doesNotMatch(source, /const \[wechatName, setWechatName\]/)
+test('appointment form only selects an existing registered customer', () => {
+  assert.match(source, /id="appointment-customer"/)
+  assert.match(source, /customers\.map\(\(customer\)/)
+  assert.match(source, /customerId: member\.id/)
+  assert.doesNotMatch(source, /id="appointment-nickname"/)
+  assert.doesNotMatch(source, /id="appointment-wechat-id"/)
+  assert.doesNotMatch(source, /db\.customers\.add/)
 })
 
 test('appointment notes are editable and persisted', () => {
@@ -19,20 +22,29 @@ test('appointment notes are editable and persisted', () => {
 
 test('appointment submission uses application validation', () => {
   assert.match(source, /<form className="data-form appointment-form" onSubmit=\{submit\} noValidate>/)
-  assert.match(source, /if \(!nickname\.trim\(\) \|\| !wechatId\.trim\(\)\)/)
+  assert.match(source, /const member = customersById\.get\(selectedCustomerId\)/)
+  assert.match(source, /notify\('请选择已登记客户'\)/)
+})
+
+test('appointment creation redirects to registration when there are no customers', () => {
+  assert.match(source, /if \(!customers\.length\)/)
+  assert.match(source, /onOpenRegistration\(\)/)
 })
 
 test('home repair actions synchronize the linked appointment status', () => {
-  assert.match(source, /appointmentId,\n\s+name: memberName/)
+  assert.match(source, /appointmentId,\n\s+serviceType:/)
   assert.match(homeSource, /db\.transaction\('rw', db\.customers, db\.appointments/)
   assert.match(homeSource, /db\.appointments\.update\(appointment\.id, \{ status \}\)/)
 })
 
-test('completed appointments cannot change status or be deleted', () => {
+test('completed appointments can be cancelled while cancelled appointments are terminal', () => {
+  assert.match(source, /completed: \['completed', 'cancelled'\]/)
+  assert.match(source, /cancelled: \['cancelled'\]/)
+  assert.match(source, /statusTransitions\[appointment\.status\]\.includes\(status\)/)
+  assert.match(source, /statusTransitions\[appointment\.status\]\.map/)
+  assert.match(source, /appointment\.status === 'cancelled' \? \(/)
+  assert.match(source, /status-badge cancelled/)
   assert.match(source, /if \(appointment\?\.status === 'completed'\)/)
-  assert.match(source, /if \(appointment\.status === 'completed'\)/)
-  assert.match(source, /appointment\.status === 'completed' \? \(/)
-  assert.match(source, /status-badge completed/)
 })
 
 test('appointment list follows the requested field order', () => {
