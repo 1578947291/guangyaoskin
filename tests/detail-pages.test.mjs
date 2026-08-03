@@ -87,4 +87,5 @@ test('primary pages confirm exit while secondary pages use history back', () => 
   assert.match(app, /确定退出凹陷修复吗/)
   assert.match(app, /window\.history\.forward\(\)/)
   assert.match(app, /state\.from === fallbackHash/)
+  assert.doesNotMatch(app, /beforeunload/)
 })

@@ -113,18 +113,11 @@ export default function App() {
       window.scrollTo({ top: 0, behavior: 'instant' })
     }
     const updateHashRoute = () => setRoute(readRoute())
-    const confirmUnload = (event: BeforeUnloadEvent) => {
-      if (exitConfirmed.current || isSecondaryRoute(readRoute())) return
-      event.preventDefault()
-      event.returnValue = ''
-    }
     window.addEventListener('popstate', updateRoute)
     window.addEventListener('hashchange', updateHashRoute)
-    window.addEventListener('beforeunload', confirmUnload)
     return () => {
       window.removeEventListener('popstate', updateRoute)
       window.removeEventListener('hashchange', updateHashRoute)
-      window.removeEventListener('beforeunload', confirmUnload)
     }
   }, [])
 

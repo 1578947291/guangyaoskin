@@ -6,10 +6,10 @@
   text-rendering: optimizeLegibility;
   --app-gradient: linear-gradient(155deg, #ffe3ef 0%, #eadbff 48%, #ffabc5 100%);
   --background: #f8def0;
-  --surface: rgba(255, 253, 255, 0.86);
-  --text: #482b45;
-  --muted: #725d70;
-  --line: rgba(220, 169, 201, 0.5);
+  --surface: rgba(255, 253, 255, 0.94);
+  --text: #342033;
+  --muted: #5e465d;
+  --line: rgba(178, 111, 157, 0.42);
   --coral: #df4f78;
   --coral-soft: #ffe1ea;
   --teal: #2f806d;
@@ -17,7 +17,7 @@
   --gold: #9c6b18;
   --gold-soft: #fff0c9;
   --danger: #bd294e;
-  --shadow: 0 9px 26px rgba(118, 64, 103, 0.09);
+  --shadow: 0 9px 26px rgba(118, 64, 103, 0.13);
   letter-spacing: 0;
 }
 
@@ -3592,18 +3592,18 @@ main {
   :root {
     --app-gradient: linear-gradient(155deg, #ffe3ef 0%, #eadbff 48%, #ffabc5 100%);
     --background: #f8def0;
-    --surface: rgba(50, 38, 53, 0.94);
-    --text: #fff4fb;
-    --muted: #d7c1d2;
-    --line: #634c61;
-    --coral: #ef7780;
-    --coral-soft: #46292d;
-    --teal: #68c6b8;
-    --teal-soft: #203c38;
-    --gold: #e0ad51;
-    --gold-soft: #443821;
-    --danger: #ff8a91;
-    --shadow: 0 7px 22px rgba(0, 0, 0, 0.18);
+    --surface: rgba(255, 253, 255, 0.94);
+    --text: #342033;
+    --muted: #5e465d;
+    --line: rgba(178, 111, 157, 0.42);
+    --coral: #cf416d;
+    --coral-soft: #ffe3ec;
+    --teal: #247263;
+    --teal-soft: #e6f5f0;
+    --gold: #865716;
+    --gold-soft: #fff1ca;
+    --danger: #b8284c;
+    --shadow: 0 9px 26px rgba(118, 64, 103, 0.13);
   }
 
   html,
@@ -3616,38 +3616,38 @@ main {
   }
 
   .topbar {
-    border-bottom-color: rgba(255, 213, 235, 0.13);
-    background: rgba(42, 31, 45, 0.84);
+    border-bottom-color: rgba(223, 174, 206, 0.42);
+    background: rgba(255, 244, 251, 0.88);
   }
 
   .quick-action:hover {
-    border-color: #52605a;
-    background-color: #26302c;
+    border-color: #d7a9c8;
+    background-color: #fff7fb;
   }
 
   .offline-status {
-    border-color: #6e5a32;
-    color: #f0c879;
+    border-color: #d0ab55;
+    color: #765117;
   }
 
   .bottom-nav {
-    border-color: rgba(255, 255, 255, 0.14);
-    background: rgba(48, 36, 51, 0.9);
+    border-color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 242, 250, 0.92);
   }
 
   .nav-item {
-    color: #d6bdd0;
+    color: #72516e;
   }
 
   .nav-item:hover,
   .nav-item.selected {
-    color: #ff9cba;
-    background: rgba(255, 255, 255, 0.09);
+    color: #b73362;
+    background: rgba(255, 255, 255, 0.9);
   }
 
   .toast {
-    border-color: #69736f;
-    background: #0f1312;
+    border-color: #28322f;
+    background: #28322f;
   }
 
   .appointment-calendar .rdp-selected .rdp-day_button {
