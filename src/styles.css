@@ -1351,6 +1351,15 @@ main {
   background: var(--surface);
 }
 
+.customer-edit-button {
+  min-height: 38px;
+  padding-inline: 13px;
+  border-color: rgba(244, 143, 177, 0.32);
+  color: var(--coral-strong);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 10px 22px rgba(225, 101, 139, 0.12);
+}
+
 .detail-identity,
 .customer-detail-hero {
   display: grid;
@@ -3089,6 +3098,16 @@ main {
   color: var(--text);
   font-size: 14px;
   font-weight: 760;
+}
+
+.customer-edit-hint {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 12px;
+  color: var(--muted);
+  background: rgba(255, 247, 250, 0.92);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .registration-form-grid {

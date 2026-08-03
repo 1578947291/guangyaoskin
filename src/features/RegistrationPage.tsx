@@ -166,6 +166,7 @@ export function RegistrationPage({
       <CustomerDetailPage
         customer={detailCustomer}
         appointmentId={appointmentId}
+        notify={notify}
         onBack={onBackCustomer}
         onOpenAppointment={(selectedAppointmentId) => onOpenAppointment(detailCustomer.id, selectedAppointmentId)}
         onOpenPhotos={() => onOpenPhotos(detailCustomer.id)}

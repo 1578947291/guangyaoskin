@@ -50,10 +50,23 @@ test('photos open in a full-screen keyboard accessible viewer', () => {
 test('registration list opens customer detail and its appointments', () => {
   assert.match(registrationList, /onOpenCustomer\(customer\.id\)/)
   assert.match(registrationList, /<CustomerDetailPage/)
+  assert.match(registrationList, /notify=\{notify\}/)
   assert.match(registrationList, /<CustomerPhotosPage/)
   assert.match(customerDetail, /customerAppointments\(customer, appointments\)/)
   assert.match(customerDetail, /onOpenAppointment\(appointment\.id\)/)
   assert.match(customerDetail, /<AppointmentDetailPage/)
+})
+
+test('customer detail can edit customer profile and recalculates balance fields', () => {
+  assert.match(customerDetail, /const \[editOpen, setEditOpen\] = useState\(false\)/)
+  assert.match(customerDetail, /编辑用户资料/)
+  assert.match(customerDetail, /电话<small>选填<\/small>/)
+  assert.match(customerDetail, /nextTotalQuote < paidAmount/)
+  assert.match(customerDetail, /nextRequiredSessions < bookedSessions/)
+  assert.match(customerDetail, /db\.customers\.update\(customer\.id/)
+  assert.match(customerDetail, /outstandingBalance: nextTotalQuote - paidAmount/)
+  assert.match(customerDetail, /remainingSessions: nextRequiredSessions - bookedSessions/)
+  assert.match(customerDetail, /用户资料已更新/)
 })
 
 test('detail pages use independent hash routes with safe back fallbacks', () => {
