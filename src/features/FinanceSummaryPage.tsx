@@ -64,7 +64,7 @@ export function FinanceSummaryPage({ onBack }: FinanceSummaryPageProps) {
         <button className="icon-button detail-back-button" type="button" onClick={onBack} aria-label="返回收支页面" title="返回">
           <CuteIcon name="back" size={20} />
         </button>
-        <div><p>FINANCE DETAIL</p><h1>收支明细</h1></div>
+        <div><h1>收支明细</h1></div>
         <span className="finance-period-count">{filteredEntries.length} 笔</span>
       </header>
 

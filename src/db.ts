@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
-import { migrateCustomerRelations } from './lib/dataMigration'
+import { migrateCustomerBalances, migrateCustomerRelations } from './lib/dataMigration'
 import type { Appointment, CustomerRecord, LedgerEntry } from './types'
 
 class GuangYaoDatabase extends Dexie {
@@ -32,6 +32,18 @@ class GuangYaoDatabase extends Dexie {
       )
       await appointmentTable.bulkPut(migrated.appointments)
       await customerTable.bulkPut(migrated.customers)
+    })
+    this.version(4).stores({
+      appointments: 'id, customerId, scheduledAt, status, createdAt',
+      customers: 'id, name, phone, createdAt, repairDate, repairStatus',
+      ledgerEntries: 'id, occurredAt, kind, createdAt'
+    }).upgrade(async (transaction) => {
+      const appointmentTable = transaction.table<Appointment, string>('appointments')
+      const customerTable = transaction.table<CustomerRecord, string>('customers')
+      await customerTable.bulkPut(migrateCustomerBalances(
+        await appointmentTable.toArray(),
+        await customerTable.toArray()
+      ))
     })
   }
 }

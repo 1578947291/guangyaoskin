@@ -62,7 +62,7 @@ export function CustomerPhotosPage({ customer, notify, onBack }: CustomerPhotosP
         <button className="icon-button detail-back-button" type="button" onClick={onBack} aria-label="返回用户详情" title="返回">
           <CuteIcon name="back" size={20} />
         </button>
-        <div><p>PHOTO LIBRARY</p><h1>照片管理</h1></div>
+        <div><h1>照片管理</h1></div>
         <span className="detail-count">{photos.length} 张</span>
       </header>
 

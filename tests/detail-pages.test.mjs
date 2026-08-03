@@ -33,6 +33,8 @@ test('customer detail previews two photos and delegates management to a secondar
 test('detail profile fields are grouped into one summary panel', () => {
   assert.match(appointmentDetail, /detail-summary-panel surface/)
   assert.match(customerDetail, /detail-summary-panel surface/)
+  assert.match(customerDetail, /customerBookedSessions\(customer\)/)
+  assert.match(customerDetail, /label="已预约次数"/)
   assert.doesNotMatch(appointmentDetail, /detail-info-item surface/)
   assert.doesNotMatch(customerDetail, /detail-info-item surface/)
 })
@@ -75,6 +77,9 @@ test('database migration moves legacy appointment photos onto customers', () => 
   assert.match(migration, /migrateCustomerRelations/)
   assert.match(migration, /customer\.photoDataUrls = uniquePhotos/)
   assert.match(migration, /customerId: customer\.id/)
+  assert.match(migration, /migrateCustomerBalances/)
+  assert.match(migration, /outstandingBalance: customer\.outstandingBalance \?\? Math\.max\(0, totalQuote - paidAmount\)/)
+  assert.match(migration, /remainingSessions: customer\.remainingSessions \?\? Math\.max\(0, requiredSessions - usedSessions\)/)
 })
 
 test('primary pages confirm exit while secondary pages use history back', () => {

@@ -76,7 +76,7 @@ export function FinancePage({ notify, onOpenSummary }: FinancePageProps) {
   return (
     <section className="page">
       <PageHeader
-        eyebrow="FINANCE"
+        eyebrow=""
         title="收支"
         subtitle="记录每一笔经营往来"
         action={<button className="action-button" type="button" onClick={() => setOpen(true)}><CuteIcon name="plus" size={17} />新增</button>}

@@ -9,12 +9,36 @@ test('appointment form only selects an existing registered customer', () => {
   assert.match(source, /id="appointment-customer"/)
   assert.match(source, /customers\.map\(\(customer\)/)
   assert.match(source, /className="appointment-customer-options"/)
+  assert.match(source, /id="appointment-customer-search"/)
+  assert.match(source, /filteredCustomers/)
+  assert.match(source, /没有匹配客户/)
+  assert.match(source, /customerBookedSessions\(customer\)/)
   assert.match(source, /type="radio" name="appointment-customer"/)
   assert.match(source, /onChange=\{\(\) => setSelectedCustomerId\(customer\.id\)\}/)
   assert.match(source, /customerId: member\.id/)
   assert.doesNotMatch(source, /id="appointment-nickname"/)
   assert.doesNotMatch(source, /id="appointment-wechat-id"/)
   assert.doesNotMatch(source, /db\.customers\.add/)
+})
+
+test('appointment form records project, payment and repair count', () => {
+  assert.match(source, /const serviceLabels: Record<AppointmentService, string>/)
+  assert.match(source, /name="appointment-type"/)
+  assert.match(source, /setAppointmentType\('full-face'\)/)
+  assert.match(source, /appointmentType,/)
+  assert.match(source, /id="appointment-amount"/)
+  assert.match(source, /id="appointment-sessions-used"/)
+  assert.match(source, /const amount = Number\(paymentAmount\)/)
+  assert.match(source, /const sessionCount = Number\(sessionsUsed\)/)
+  assert.match(source, /sessionsUsed: sessionCount/)
+})
+
+test('appointment creation deducts customer balance and cancellation restores it', () => {
+  assert.match(source, /consumeCustomerBalance\(member, amount, sessionCount\)/)
+  assert.match(source, /customerOutstandingBalance\(member\)/)
+  assert.match(source, /本次收款不能超过客户还需支付的尾款/)
+  assert.match(source, /restoreCustomerBalance\(member, appointment\.amount \|\| 0, appointment\.sessionsUsed \|\| 1\)/)
+  assert.match(source, /预约已取消，尾款和次数已恢复/)
 })
 
 test('appointment notes are editable and persisted', () => {
@@ -35,9 +59,10 @@ test('appointment creation redirects to registration when there are no customers
 })
 
 test('home repair actions synchronize the linked appointment status', () => {
-  assert.match(source, /appointmentId,\n\s+serviceType:/)
+  assert.match(source, /appointmentId,\n\s+\.\.\.consumeCustomerBalance/)
   assert.match(homeSource, /db\.transaction\('rw', db\.customers, db\.appointments/)
   assert.match(homeSource, /db\.appointments\.update\(appointment\.id, \{ status \}\)/)
+  assert.match(homeSource, /restoreCustomerBalance\(restoredCustomer, appointment\?\.amount \|\| 0, appointment\?\.sessionsUsed \|\| 1\)/)
 })
 
 test('completed appointments can be cancelled while cancelled appointments are terminal', () => {

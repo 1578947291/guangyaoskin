@@ -13,6 +13,24 @@ test('registration requires name and WeChat while phone remains optional', () =>
   assert.match(registration, /className="data-form registration-form" onSubmit=\{submit\} noValidate/)
 })
 
+test('registration captures quote and required repair count without selecting a project', () => {
+  assert.match(registration, /id="registration-total-quote"/)
+  assert.match(registration, /id="registration-required-sessions"/)
+  assert.match(registration, /totalQuote: quote/)
+  assert.match(registration, /requiredSessions: sessionCount/)
+  assert.match(registration, /outstandingBalance: quote/)
+  assert.match(registration, /remainingSessions: sessionCount/)
+  assert.doesNotMatch(registration, /name="registration-service"/)
+  assert.doesNotMatch(registration, /registration-repair-date/)
+})
+
+test('customer list shows booked count, outstanding balance and remaining repair count', () => {
+  assert.match(registration, /customerBookedSessions\(customer\)/)
+  assert.match(registration, /customerOutstandingBalance\(customer\)/)
+  assert.match(registration, /customerRemainingSessions\(customer\)/)
+  assert.match(registration, /已约 \{bookedSessions\} 次 · 剩余 \{remainingSessions\} 次 · 尾款 \{currency\.format\(outstandingBalance\)\}/)
+})
+
 test('registration modal groups fields without overlaying its actions', () => {
   assert.match(registration, /className="registration-modal"/)
   assert.equal((registration.match(/className="registration-form-section/g) || []).length, 3)

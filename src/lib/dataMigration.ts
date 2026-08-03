@@ -51,5 +51,36 @@ export function migrateCustomerRelations(appointments: Appointment[], customerRe
     return { ...appointment, customerId: customer.id }
   })
 
-  return { appointments: migratedAppointments, customers }
+  return { appointments: migratedAppointments, customers: migrateCustomerBalances(migratedAppointments, customers) }
+}
+
+export function migrateCustomerBalances(appointments: Appointment[], customerRecords: CustomerRecord[]) {
+  return customerRecords.map((customer) => {
+    if (
+      customer.totalQuote !== undefined &&
+      customer.requiredSessions !== undefined &&
+      customer.outstandingBalance !== undefined &&
+      customer.remainingSessions !== undefined
+    ) {
+      return customer
+    }
+
+    const linkedAppointments = appointments.filter((appointment) => {
+      if (appointment.status === 'cancelled') return false
+      if (appointment.customerId === customer.id) return true
+      return customer.appointmentId === appointment.id
+    })
+    const paidAmount = linkedAppointments.reduce((sum, appointment) => sum + (appointment.amount || 0), 0)
+    const usedSessions = linkedAppointments.reduce((sum, appointment) => sum + (appointment.sessionsUsed || 1), 0)
+    const totalQuote = customer.totalQuote ?? customer.amount ?? paidAmount
+    const requiredSessions = customer.requiredSessions ?? customer.sessions ?? usedSessions
+
+    return {
+      ...customer,
+      totalQuote,
+      requiredSessions,
+      outstandingBalance: customer.outstandingBalance ?? Math.max(0, totalQuote - paidAmount),
+      remainingSessions: customer.remainingSessions ?? Math.max(0, requiredSessions - usedSessions)
+    }
+  })
 }

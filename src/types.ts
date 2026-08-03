@@ -21,6 +21,7 @@ export interface Appointment {
   wechatName?: string
   appointmentType?: AppointmentService
   amount?: number
+  sessionsUsed?: number
   photoDataUrl?: string
   photoDataUrls?: string[]
   cancelReason?: string
@@ -38,6 +39,10 @@ export interface CustomerRecord {
   serviceType?: AppointmentService
   amount?: number
   sessions?: number
+  totalQuote?: number
+  requiredSessions?: number
+  outstandingBalance?: number
+  remainingSessions?: number
   repairDate?: string
   repairStatus?: RepairStatus
   photoDataUrl?: string

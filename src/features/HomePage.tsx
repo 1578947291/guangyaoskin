@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { CuteIcon, type CuteIconName } from '../components/CuteIcon'
 import { db } from '../db'
+import { customerRemainingSessions, restoreCustomerBalance } from '../lib/customerBalance'
 import type { Appointment, AppointmentService, CustomerRecord, Notify } from '../types'
 
 const currency = new Intl.NumberFormat('zh-CN', {
@@ -127,9 +128,15 @@ export function HomePage({ notify }: HomePageProps) {
   const updateRepair = async (customer: CustomerRecord, status: 'completed' | 'cancelled') => {
     const appointment = linkedAppointment(customer, appointments)
     await db.transaction('rw', db.customers, db.appointments, async () => {
+      const restoredCustomer = status === 'cancelled' && appointment
+        ? await db.customers.get(customer.id)
+        : undefined
       await db.customers.update(customer.id, status === 'completed'
         ? { repairStatus: status, lastVisitAt: new Date().toISOString() }
-        : { repairStatus: status })
+        : {
+            repairStatus: status,
+            ...(restoredCustomer ? restoreCustomerBalance(restoredCustomer, appointment?.amount || 0, appointment?.sessionsUsed || 1) : {})
+          })
       if (appointment) {
         await db.appointments.update(appointment.id, { status })
       }
@@ -144,7 +151,7 @@ export function HomePage({ notify }: HomePageProps) {
   const cancelRepair = async (customer: CustomerRecord) => {
     if (!window.confirm('确定取消这位客人的修复安排吗？')) return
     await updateRepair(customer, 'cancelled')
-    notify('已取消修复安排，预约状态已同步')
+    notify('已取消修复安排，尾款和次数已恢复')
   }
 
   return (
@@ -164,7 +171,6 @@ export function HomePage({ notify }: HomePageProps) {
       <section className="repair-section">
         <header className="repair-heading">
           <div>
-            <p>REPAIR SCHEDULE</p>
             <h1>待修复客人</h1>
           </div>
           <span>{pendingRepairs.length} 位</span>
@@ -192,7 +198,7 @@ export function HomePage({ notify }: HomePageProps) {
                       <span className={`service-tag ${customer.serviceType || 'legacy'}`}>{serviceName}</span>
                     </div>
                     <p><CuteIcon name="calendar" size={14} />{formatRepairDate(customer.repairDate!)}</p>
-                    <small>{customer.sessions ? `${customer.sessions} 次` : '次数未填写'}{customer.wechatId ? ` · ${customer.wechatId}` : ''}</small>
+                    <small>剩余 {customerRemainingSessions(customer)} 次{customer.wechatId ? ` · ${customer.wechatId}` : ''}</small>
                   </div>
                   <div className="repair-actions">
                     <button className="repair-action complete" type="button" onClick={() => completeRepair(customer)}>

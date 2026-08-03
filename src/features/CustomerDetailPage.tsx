@@ -3,6 +3,13 @@ import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { CuteIcon, type CuteIconName } from '../components/CuteIcon'
 import { db } from '../db'
+import {
+  customerBookedSessions,
+  customerOutstandingBalance,
+  customerRemainingSessions,
+  customerRequiredSessions,
+  customerTotalQuote
+} from '../lib/customerBalance'
 import { customerAppointments } from '../lib/customerAppointments'
 import { customerPhotos } from '../lib/customerPhotos'
 import type { AppointmentService, AppointmentStatus, CustomerRecord } from '../types'
@@ -60,8 +67,12 @@ export function CustomerDetailPage({
     )
   }
 
-  const appointmentTotal = linkedAppointments.reduce((sum, appointment) => sum + (appointment.amount || 0), 0)
   const serviceName = customer.serviceType ? serviceLabels[customer.serviceType] : '未设置项目'
+  const totalQuote = customerTotalQuote(customer)
+  const outstandingBalance = customerOutstandingBalance(customer)
+  const bookedSessions = customerBookedSessions(customer)
+  const requiredSessions = customerRequiredSessions(customer)
+  const remainingSessions = customerRemainingSessions(customer)
 
   return (
     <section className="page customer-detail-page">
@@ -69,8 +80,8 @@ export function CustomerDetailPage({
         <button className="icon-button detail-back-button" type="button" onClick={onBack} aria-label="返回登记列表" title="返回">
           <CuteIcon name="back" size={20} />
         </button>
-        <div><p>CLIENT DETAIL</p><h1>用户详情</h1></div>
-        <span className={`service-tag ${customer.serviceType || 'legacy'}`}>{serviceName}</span>
+        <div><h1>用户详情</h1></div>
+        <span className={`service-tag ${customer.serviceType || 'legacy'}`}>{customer.serviceType ? serviceName : '会员'}</span>
       </header>
 
       <section className="detail-summary-panel surface" aria-label="用户资料总览">
@@ -89,8 +100,11 @@ export function CustomerDetailPage({
         <div className="detail-info-grid customer-detail-info" aria-label="用户资料">
           <DetailItem icon="phone" label="联系电话" value={customer.phone || '未填写'} />
           <DetailItem icon="calendar" label="修复日期" value={customer.repairDate || '未设置'} />
-          <DetailItem icon="wallet" label="预约总额" value={currency.format(appointmentTotal || customer.amount || 0)} />
-          <DetailItem icon="clock" label="服务次数" value={`${linkedAppointments.length || customer.sessions || 0} 次`} />
+          <DetailItem icon="wallet" label="总体报价" value={currency.format(totalQuote)} />
+          <DetailItem icon="money" label="还需支付尾款" value={currency.format(outstandingBalance)} />
+          <DetailItem icon="clock" label="需要修复次数" value={`${requiredSessions} 次`} />
+          <DetailItem icon="calendar" label="已预约次数" value={`${bookedSessions} 次`} />
+          <DetailItem icon="service" label="剩余修复次数" value={`${remainingSessions} 次`} />
         </div>
 
         <div className="detail-notes">

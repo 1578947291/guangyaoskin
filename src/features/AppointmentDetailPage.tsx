@@ -11,7 +11,7 @@ const statusLabels: Record<AppointmentStatus, string> = {
 
 const serviceLabels: Record<AppointmentService, string> = {
   experience: '体验',
-  'full-face': '全脸'
+  'full-face': '全脸修复'
 }
 
 const currency = new Intl.NumberFormat('zh-CN', {
@@ -59,7 +59,8 @@ export function AppointmentDetailPage({ appointment, onBack }: AppointmentDetail
           <DetailItem icon="calendar" label="预约日期" value={format(scheduledAt, 'yyyy年M月d日 EEEE', { locale: zhCN })} />
           <DetailItem icon="clock" label="预约时间" value={format(scheduledAt, 'HH:mm')} />
           <DetailItem icon="service" label="预约项目" value={serviceName || '未设置'} />
-          <DetailItem icon="wallet" label="预约金额" value={appointment.amount ? currency.format(appointment.amount) : '未记账'} />
+          <DetailItem icon="wallet" label="本次收款" value={appointment.amount ? currency.format(appointment.amount) : '未记账'} />
+          <DetailItem icon="service" label="本次修复次数" value={`${appointment.sessionsUsed || 1} 次`} />
         </div>
 
         <div className="detail-notes">

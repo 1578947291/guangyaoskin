@@ -1,11 +1,12 @@
 :root {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
   color: #482b45;
-  background: #f2e6ef;
+  background: #f6d8ec;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --background: #fbeaf5;
-  --surface: rgba(255, 253, 255, 0.9);
+  --app-gradient: linear-gradient(155deg, #ffe3ef 0%, #eadbff 48%, #ffabc5 100%);
+  --background: #f8def0;
+  --surface: rgba(255, 253, 255, 0.86);
   --text: #482b45;
   --muted: #725d70;
   --line: rgba(220, 169, 201, 0.5);
@@ -27,14 +28,14 @@
 html {
   min-width: 320px;
   min-height: 100%;
-  background: #f2e6ef;
+  background: var(--app-gradient);
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #f2e6ef;
+  background: var(--app-gradient);
 }
 
 body.modal-open {
@@ -94,7 +95,7 @@ select:focus-visible {
   min-height: 100vh;
   margin: 0 auto;
   overflow-x: hidden;
-  background: linear-gradient(155deg, #fff1f6 0%, #f3e7fb 52%, #ffdee8 100%);
+  background: var(--app-gradient);
   box-shadow: 0 0 50px rgba(93, 49, 82, 0.12);
 }
 
@@ -2922,9 +2923,43 @@ main {
   font-weight: 700;
 }
 
+.appointment-customer-search {
+  display: grid;
+  min-width: 0;
+  margin-bottom: 8px;
+  padding: 0 9px;
+  grid-template-columns: 22px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.appointment-customer-search input {
+  min-width: 0;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  background: transparent;
+}
+
+.appointment-customer-search button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--muted);
+  background: transparent;
+}
+
 .appointment-customer-options {
   display: grid;
-  max-height: 214px;
+  max-height: 284px;
   overflow-y: auto;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -3019,6 +3054,16 @@ main {
   border-color: var(--teal);
   color: #ffffff;
   background: var(--teal);
+}
+
+.appointment-customer-empty {
+  display: grid;
+  min-height: 92px;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .registration-form {
@@ -3545,7 +3590,8 @@ main {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #251c28;
+    --app-gradient: linear-gradient(155deg, #ffe3ef 0%, #eadbff 48%, #ffabc5 100%);
+    --background: #f8def0;
     --surface: rgba(50, 38, 53, 0.94);
     --text: #fff4fb;
     --muted: #d7c1d2;
@@ -3562,11 +3608,11 @@ main {
 
   html,
   body {
-    background: #1d171f;
+    background: var(--app-gradient);
   }
 
   .app-shell {
-    background: linear-gradient(155deg, #352433 0%, #292039 52%, #3a252f 100%);
+    background: var(--app-gradient);
   }
 
   .topbar {

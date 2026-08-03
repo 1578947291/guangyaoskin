@@ -4,16 +4,12 @@ import { CuteIcon } from '../components/CuteIcon'
 import { Modal } from '../components/Modal'
 import { EmptyState, PageHeader } from '../components/PageElements'
 import { db } from '../db'
+import { customerBookedSessions, customerOutstandingBalance, customerRemainingSessions, customerTotalQuote } from '../lib/customerBalance'
 import { createId } from '../lib/id'
 import { preparePhoto } from '../lib/images'
-import type { AppointmentService, Notify } from '../types'
+import type { Notify } from '../types'
 import { CustomerDetailPage } from './CustomerDetailPage'
 import { CustomerPhotosPage } from './CustomerPhotosPage'
-
-const serviceLabels: Record<AppointmentService, string> = {
-  experience: '体验',
-  'full-face': '全脸'
-}
 
 const currency = new Intl.NumberFormat('zh-CN', {
   style: 'currency',
@@ -30,12 +26,6 @@ const registrationDate = new Intl.DateTimeFormat('zh-CN', {
   minute: '2-digit',
   hour12: false
 })
-
-function todayValue() {
-  const date = new Date()
-  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
-  return date.toISOString().slice(0, 10)
-}
 
 interface RegistrationPageProps {
   notify: Notify
@@ -68,10 +58,8 @@ export function RegistrationPage({
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [wechatId, setWechatId] = useState('')
-  const [serviceType, setServiceType] = useState<AppointmentService>('experience')
-  const [customAmount, setCustomAmount] = useState('')
-  const [sessions, setSessions] = useState('1')
-  const [repairDate, setRepairDate] = useState(todayValue)
+  const [totalQuote, setTotalQuote] = useState('')
+  const [requiredSessions, setRequiredSessions] = useState('1')
   const [photoDataUrl, setPhotoDataUrl] = useState('')
   const [notes, setNotes] = useState('')
   const [photoBusy, setPhotoBusy] = useState(false)
@@ -80,8 +68,7 @@ export function RegistrationPage({
   const filtered = customers.filter((customer) => {
     const keyword = search.trim().toLocaleLowerCase('zh-CN')
     if (!keyword) return true
-    const serviceName = customer.serviceType ? serviceLabels[customer.serviceType] : ''
-    return [customer.name, customer.phone, customer.wechatId || '', serviceName]
+    return [customer.name, customer.phone, customer.wechatId || '']
       .some((value) => value.toLocaleLowerCase('zh-CN').includes(keyword))
   })
 
@@ -89,10 +76,8 @@ export function RegistrationPage({
     setName('')
     setPhone('')
     setWechatId('')
-    setServiceType('experience')
-    setCustomAmount('')
-    setSessions('1')
-    setRepairDate(todayValue())
+    setTotalQuote('')
+    setRequiredSessions('1')
     setPhotoDataUrl('')
     setNotes('')
     setPhotoBusy(false)
@@ -109,14 +94,14 @@ export function RegistrationPage({
       notify('请完整填写姓名和微信号')
       return
     }
-    const amount = serviceType === 'experience' ? 1380 : Number(customAmount)
-    const sessionCount = Number(sessions)
-    if (!Number.isFinite(amount) || amount <= 0) {
-      notify('请输入正确的全脸金额')
+    const quote = Number(totalQuote)
+    const sessionCount = Number(requiredSessions)
+    if (!Number.isFinite(quote) || quote <= 0) {
+      notify('请输入正确的总体报价')
       return
     }
     if (!Number.isInteger(sessionCount) || sessionCount <= 0) {
-      notify('请输入正确的次数')
+      notify('请输入正确的需要修复次数')
       return
     }
 
@@ -129,10 +114,12 @@ export function RegistrationPage({
         skinNotes: notes.trim(),
         createdAt: new Date().toISOString(),
         wechatId: wechatId.trim(),
-        serviceType,
-        amount,
+        amount: quote,
         sessions: sessionCount,
-        repairDate,
+        totalQuote: quote,
+        requiredSessions: sessionCount,
+        outstandingBalance: quote,
+        remainingSessions: sessionCount,
         repairStatus: 'pending',
         photoDataUrl: photoDataUrl || undefined,
         photoDataUrls: photoDataUrl ? [photoDataUrl] : undefined
@@ -190,7 +177,7 @@ export function RegistrationPage({
   return (
     <section className="page registration-page">
       <PageHeader
-        eyebrow="CLIENTS"
+        eyebrow=""
         title="登记"
         subtitle="顾客项目与修复记录"
         action={<button className="action-button" type="button" onClick={() => setOpen(true)}><CuteIcon name="userAdd" size={17} />新增</button>}
@@ -198,8 +185,8 @@ export function RegistrationPage({
 
       <label className="search-box registration-search">
         <CuteIcon name="search" size={18} />
-        <span className="sr-only">搜索姓名、电话、微信号或项目</span>
-        <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索姓名、电话、微信号或项目" />
+        <span className="sr-only">搜索姓名、电话或微信号</span>
+        <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索姓名、电话或微信号" />
         {search ? <button type="button" onClick={() => setSearch('')} aria-label="清除搜索" title="清除搜索"><CuteIcon name="close" size={17} /></button> : null}
       </label>
 
@@ -210,7 +197,10 @@ export function RegistrationPage({
       ) : (
         <div className="record-list customer-list">
           {filtered.map((customer) => {
-            const serviceName = customer.serviceType ? serviceLabels[customer.serviceType] : '未设置项目'
+            const outstandingBalance = customerOutstandingBalance(customer)
+            const bookedSessions = customerBookedSessions(customer)
+            const remainingSessions = customerRemainingSessions(customer)
+            const totalQuote = customerTotalQuote(customer)
             return (
               <article className="registration-card surface" key={customer.id}>
                 <button className="registration-detail-hitarea" type="button" onClick={() => onOpenCustomer(customer.id)} aria-label={`查看${customer.name}的用户详情`} />
@@ -222,12 +212,11 @@ export function RegistrationPage({
                 <div className="record-copy registration-copy">
                   <div className="record-title-line">
                     <h2>{customer.name}</h2>
-                    <span className={`service-tag ${customer.serviceType || 'legacy'}`}>{serviceName}</span>
+                    <span className="service-tag legacy">会员</span>
                   </div>
                   <p>登记时间：{registrationDate.format(new Date(customer.createdAt))}</p>
-                  {customer.amount || customer.sessions ? (
-                    <small>{customer.amount ? currency.format(customer.amount) : ''}{customer.amount && customer.sessions ? ' · ' : ''}{customer.sessions ? `${customer.sessions} 次` : ''}</small>
-                  ) : null}
+                  <small>已约 {bookedSessions} 次 · 剩余 {remainingSessions} 次 · 尾款 {currency.format(outstandingBalance)}</small>
+                  {totalQuote ? <small>总报价 {currency.format(totalQuote)}</small> : null}
                 </div>
                 <button className="danger-icon-button" type="button" onClick={() => remove(customer.id)} aria-label="删除顾客登记" title="删除顾客登记"><CuteIcon name="delete" size={17} /></button>
               </article>
@@ -248,27 +237,10 @@ export function RegistrationPage({
           </section>
 
           <section className="registration-form-section">
-            <h3>服务信息</h3>
+            <h3>报价与次数</h3>
             <div className="registration-form-grid">
-              <fieldset className="segmented service-picker full-field">
-                <legend>项目</legend>
-                <label className={serviceType === 'experience' ? 'active' : ''}>
-                  <input type="radio" name="registration-service" value="experience" checked={serviceType === 'experience'} onChange={() => setServiceType('experience')} />
-                  <span>体验</span><small>固定 ￥1,380</small>
-                </label>
-                <label className={serviceType === 'full-face' ? 'active' : ''}>
-                  <input type="radio" name="registration-service" value="full-face" checked={serviceType === 'full-face'} onChange={() => setServiceType('full-face')} />
-                  <span>全脸</span><small>手动填写金额</small>
-                </label>
-              </fieldset>
-
-              {serviceType === 'full-face' ? (
-                <label htmlFor="registration-amount">金额<input id="registration-amount" required type="number" min="0.01" step="0.01" inputMode="decimal" value={customAmount} onChange={(event) => setCustomAmount(event.target.value)} /></label>
-              ) : (
-                <div className="fixed-amount"><span>项目金额</span><strong>{currency.format(1380)}</strong><small>体验项目固定金额</small></div>
-              )}
-              <label htmlFor="registration-sessions">次数<input id="registration-sessions" required type="number" min="1" step="1" inputMode="numeric" value={sessions} onChange={(event) => setSessions(event.target.value)} /></label>
-              <label htmlFor="registration-repair-date">修复日期<input id="registration-repair-date" required type="date" value={repairDate} onChange={(event) => setRepairDate(event.target.value)} /></label>
+              <label htmlFor="registration-total-quote"><span className="form-label">总体报价<small>必填</small></span><input id="registration-total-quote" required type="number" min="0.01" step="0.01" inputMode="decimal" value={totalQuote} onChange={(event) => setTotalQuote(event.target.value)} /></label>
+              <label htmlFor="registration-required-sessions"><span className="form-label">需要修复次数<small>必填</small></span><input id="registration-required-sessions" required type="number" min="1" step="1" inputMode="numeric" value={requiredSessions} onChange={(event) => setRequiredSessions(event.target.value)} /></label>
             </div>
           </section>
 
