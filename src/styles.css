@@ -108,9 +108,11 @@ select:focus-visible {
   justify-content: space-between;
   min-height: 66px;
   padding: calc(10px + env(safe-area-inset-top)) 18px 10px;
-  border-bottom: 1px solid rgba(223, 174, 206, 0.42);
-  background: rgba(255, 244, 251, 0.78);
-  backdrop-filter: blur(20px) saturate(1.15);
+  border-bottom: 1px solid rgba(223, 174, 206, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 244, 251, 0.96) 0%, rgba(255, 244, 251, 0.84) 62%, rgba(255, 244, 251, 0.58) 100%),
+    linear-gradient(135deg, rgba(255, 227, 239, 0.82) 0%, rgba(234, 219, 255, 0.72) 100%);
+  backdrop-filter: blur(22px) saturate(1.18);
 }
 
 .brand-lockup,
@@ -3616,8 +3618,10 @@ main {
   }
 
   .topbar {
-    border-bottom-color: rgba(223, 174, 206, 0.42);
-    background: rgba(255, 244, 251, 0.88);
+    border-bottom-color: rgba(223, 174, 206, 0.28);
+    background:
+      linear-gradient(180deg, rgba(255, 244, 251, 0.96) 0%, rgba(255, 244, 251, 0.84) 62%, rgba(255, 244, 251, 0.58) 100%),
+      linear-gradient(135deg, rgba(255, 227, 239, 0.82) 0%, rgba(234, 219, 255, 0.72) 100%);
   }
 
   .quick-action:hover {
